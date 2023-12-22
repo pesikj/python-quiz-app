@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h1>Courses</h1>
+    <ul class="list-group">
+      {% for quiz in quizzes %}
+        <li class="list-group-item">
+          <strong>{{ quiz.title }}</strong>
+          <p>{{ quiz.deadline }}</p>
+          {% if quiz_questions|get_item:quiz.id %}
+            <a href="{% url 'question' quiz_questions|get_item:quiz.id %}" class="btn btn-primary">Otevřít kvíz</a>
+          {% endif %}
+          {% if user.is_superuser %}
+            <a href="{% url 'question_add' quiz.id %}" class="btn btn-primary">Přidat otázku</a>
+          {% endif %}
+        </li>
+      {% empty %}
+        <li class="list-group-item">No quizes available</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endblock %}

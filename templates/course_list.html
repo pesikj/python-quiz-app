@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h1>Courses</h1>
+    <ul class="list-group">
+      {% for course in courses %}
+        <li class="list-group-item">
+          <strong>{{ course.title }}</strong>
+          <p>{{ course.description }}</p>
+          <a href="{% url 'quiz_list' course.id %}" class="btn btn-primary">Zobrazit</a>
+        </li>
+      {% empty %}
+        <li class="list-group-item">Zatím nejsou vytvořeny žádné kurzy</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endblock %}

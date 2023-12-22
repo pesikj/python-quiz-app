@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        <h2 class="text-center">Přihlášení</h2>
+        <form method="post">
+          {% csrf_token %}
+          <!-- Display form errors -->
+          {% if form.errors %}
+            <div class="alert alert-danger">
+              Neplatné uživatelské jméno nebo heslo
+            </div>
+          {% endif %}
+          <!-- Username Field -->
+          <div class="form-group">
+            <label for="username">Uživatelské jméno</label>
+            <input type="text" class="form-control" id="username" name="username" placeholder="Uživatelské jméno">
+          </div>
+          <!-- Password Field -->
+          <div class="form-group">
+            <label for="password">Heslo</label>
+            <input type="password" class="form-control" id="password" name="password" placeholder="Heslo">
+          </div>
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary">Přihlásit</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
