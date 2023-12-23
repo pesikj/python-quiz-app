@@ -1,4 +1,4 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Max, Q
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render, redirect
@@ -80,25 +80,34 @@ class QuestionView(LoginRequiredMixin, DetailView):
         return render(request, self.template_name, context)
 
 
-class AddCourseView(LoginRequiredMixin, CreateView):
+class AddCourseView(UserPassesTestMixin, CreateView):
     model = Course
     form_class = CourseForm
     template_name = 'add_course.html'
     success_url = reverse_lazy('course_list')
 
+    def test_func(self):
+        return self.request.user.is_superuser
 
-class AddQuizView(LoginRequiredMixin, CreateView):
+
+class AddQuizView(UserPassesTestMixin, CreateView):
     model = Quiz
     form_class = QuizForm
     template_name = 'add_quiz.html'
     success_url = reverse_lazy('course_list')
 
+    def test_func(self):
+        return self.request.user.is_superuser
 
-class AddQuestionView(LoginRequiredMixin, CreateView):
+
+class AddQuestionView(UserPassesTestMixin, CreateView):
     model = Question
     form_class = QuestionForm
     template_name = 'add_question.html'
     success_url = reverse_lazy('course_list')
+
+    def test_func(self):
+        return self.request.user.is_superuser
 
     @property
     def _quiz(self):
