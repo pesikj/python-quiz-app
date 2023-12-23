@@ -11,7 +11,7 @@
             </div>
             <div class="card-body">
               <p class="card-text">Zadání otázky: <em>{{ question.text }}</em></p>
-              <form method="post">
+              <form method="post" id="question-form">
                 {% csrf_token %}
                 <input type="hidden" value="{{ question.id }}" name="question_id">
                 {% if question.type == "ST" %}
@@ -32,7 +32,8 @@
                   {% for option in question.option_set.all %}
                     <div class="form-check">
                       <input class="form-check-input" type="checkbox" name="option_{{ option.id }}"
-                             id="option_{{ option.id }}" value="{{ option.id }}">
+                             id="option_{{ option.id }}" value="{{ option.id }}" 
+                             {% if option.id in selected_options_ids %}checked{% endif %}>
                       <label class="form-check-label" for="option_{{ option.id }}">
                         {{ option.text }}
                       </label>
@@ -41,24 +42,31 @@
                 {% endif %}
                 {% if continue %}
                   {% if not question.last_question %}
-                    <a href="{% url 'question' question.next_question.pk %}" class="btn btn-primary">Pokračovat</a>
+                    <a href="{% url 'question' question.next_question.pk %}" class="btn btn-primary mt-3">Pokračovat</a>
                   {% else %}
-                    <a href="{% url 'quiz_list' question.quiz.course.pk %}" class="btn btn-primary">Dokončit</a>
+                    <a href="{% url 'quiz_list' question.quiz.course.pk %}" class="btn btn-primary mt-3">Dokončit</a>
                   {% endif %}
                 {% else %}
                   <button type="submit" class="btn btn-primary mt-3">Odeslat</button>
                 {% endif %}
               </form>
-            
-              {% if feedback %}
-                  <div class="mt-3">
-                      <div class="alert alert-{{ feedback_type | default:'info' }}" role="alert">
-                          <h4 class="alert-heading">Feedback</h4>
-                          <p class="feedback-text">Vybral(a) jsi odpověď: {{ selected_option.text }}</p>
-                          <p class="feedback-text">{{ feedback }}</p>
-                      </div>
+
+              <div class="mt-3">
+                {% if feedback %}
+                  <div class="alert alert-{{ feedback_type | default:'info' }}" role="alert">
+                    <h4 class="alert-heading">Zpětná vazba</h4>
+                    {% for item in feedback %}
+                      {% if item.0 %}<p class="feedback-text">{{ item.0 }}: {% endif %}{{ item.1 }}</p>
+                    {% endfor %}
+                    {% if missing > 0 %}
+                      <p class="feedback-text">Je třeba označit alespoň jednu další možnost.</p>
+                    {% endif %}
                   </div>
-              {% endif %}
+                {% endif %}
+                <div class="alert alert-danger" role="alert" style="display: none" id="alert-select-one-option">
+                  <p class="feedback-text">Prosím vyber alespoň jednu možnost.</p>
+                </div>
+              </div>
             </div>
           {% else %}
             <div class="card-header">
@@ -75,4 +83,18 @@
       </div>
     </div>
   </div>
+{% endblock %}
+
+{% block scripts %}
+  {% if question.type == "MM" %}
+  <script>
+      document.getElementById('question-form').addEventListener('submit', (event) => {
+          if (document.querySelector('.form-check-input:checked') == null) {
+              event.preventDefault();
+              const alert = document.getElementById("alert-select-one-option");
+              alert.style.display = null;
+          }
+      });
+  </script>
+  {% endif %}
 {% endblock %}

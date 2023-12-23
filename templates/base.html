@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Courses</title>
+  <title>Python Quiz App</title>
   <!-- Bootstrap CSS -->
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
   <link href="{% static 'css/styles.css' %}" rel="stylesheet">
@@ -10,7 +10,7 @@
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark mb-3">
   <div class="container">
-    <a class="navbar-brand" href="{% url 'course_list' %}">YourApp</a>
+    <a class="navbar-brand" href="{% url 'course_list' %}">Python Quiz App</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
             aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -42,7 +42,7 @@
   </div>
 </nav>
 
-<div class="content">
+<div class="content mb-5">
 {% block content %}
 
 {% endblock %}
@@ -54,6 +54,10 @@
         </span>
     </div>
 </footer>
+
+{% block scripts %}
+
+{% endblock %}
 
 <!-- Bootstrap JS and dependencies -->
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>

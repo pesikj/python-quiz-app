@@ -14,14 +14,16 @@ class Course(models.Model):
                                   .filter(question__quiz__course=self)
                                   .values_list("question__id", flat=True))
             answered_questions = list(set(answered_questions))
-            if len(answered_questions) == 0:
-                quiz_questions_counts[quiz.id] = quiz.question_set.order_by("order").first().pk
-                continue
-            current_question_query = quiz.question_set.filter(~Q(pk__in=answered_questions))
-            if not current_question_query.exists():
+            if quiz.question_set.count() == 0:
                 quiz_questions_counts[quiz.id] = None
+            elif len(answered_questions) == 0:
+                quiz_questions_counts[quiz.id] = quiz.question_set.order_by("order").first().pk
             else:
-                quiz_questions_counts[quiz.id] = current_question_query.order_by("order").first().pk
+                current_question_query = quiz.question_set.filter(~Q(pk__in=answered_questions))
+                if not current_question_query.exists():
+                    quiz_questions_counts[quiz.id] = None
+                else:
+                    quiz_questions_counts[quiz.id] = current_question_query.order_by("order").first().pk
         return quiz_questions_counts
 
     def quiz_completion_info(self, user: User) -> dict:
@@ -78,6 +80,39 @@ class Question(models.Model):
     def __str__(self):
         return self.text
 
+    def save_question_options(self, options_texts, post_data):
+        for key, value in options_texts.items():
+            if value:
+                option_number = int(key.replace('option_text_', ''))
+                feedback = post_data.get(f"feedback_{option_number}")
+                if self.type == Question.MULTIPLE_CHOICE_SINGLE_ANSWER:
+                    is_correct = option_number == 1
+                else:
+                    is_correct = f"is_correct_{option_number}" in post_data
+                option = Option(question=self, text=value, feedback=feedback, is_correct=is_correct)
+                option.save()
+
+    def evaluate_response(self, post_data, user):
+        is_correct = True
+        selected_options = None
+        missing = 0
+        if self.type == self.MULTIPLE_CHOICE_SINGLE_ANSWER:
+            user_answer = int(post_data.get("selected_option"))
+            selected_options_queryset = self.option_set.filter(pk=user_answer)
+            is_correct = selected_options_queryset.first().is_correct
+        elif self.type == self.MULTIPLE_CHOICE_MULTIPLE_ANSWER:
+            selected_options = {key: value for key, value in post_data.items() if 'option_' in key}
+            selected_options_queryset = Option.objects.filter(id__in=selected_options.values())
+            selected_options_set = set(selected_options_queryset.values_list("id", flat=True))
+            correct_option_set = set(self.option_set.filter(is_correct=True).values_list("id", flat=True))
+            is_correct = selected_options_set == correct_option_set
+            missing = len(correct_option_set) - len(selected_options_set)
+        if is_correct:
+            user_answer_record = UserAnswer(question=self, user=user)
+            user_answer_record.save()
+            user_answer_record.selected_options.set(selected_options_queryset)
+        return selected_options_queryset, is_correct, missing
+
 
 class Option(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
@@ -112,12 +147,7 @@ class UserAnswer(models.Model):
     def user_answer(self):
         if self.question.type in (Question.SHORT_TEXT, Question.LONG_TEXT):
             return self.answer_text
-        if self.question.type == Question.MULTIPLE_CHOICE_SINGLE_ANSWER:
-            selected_option: Option = self.selected_options.first()
-            return selected_option.text
-        if self.question.type == Question.MULTIPLE_CHOICE_MULTIPLE_ANSWER:
-            selected_options: QuerySet = self.selected_options.all()
-            return "\n".join([x.text for x in selected_options])
+        return self.__get_option_attrs("text")
 
     @property
     def answer_feedback(self):
@@ -126,12 +156,14 @@ class UserAnswer(models.Model):
                 return self.admin_feedback
             if self.ai_feedback:
                 return self.ai_feedback
+
+    def __get_option_attrs(self, attr):
         if self.question.type == Question.MULTIPLE_CHOICE_SINGLE_ANSWER:
             selected_option: Option = self.selected_options.first()
-            return selected_option.calculated_feedback
+            return getattr(selected_option, attr)
         if self.question.type == Question.MULTIPLE_CHOICE_MULTIPLE_ANSWER:
             selected_options: QuerySet = self.selected_options.all()
-            return "\n".join([x.calculated_feedback for x in selected_options])
+            return f"<ul><li>{'</li><li>'.join([getattr(x, attr) for x in selected_options])}</li></ul>"
 
     def __str__(self):
         return f"{self.user.username}'s answer to {self.question.text}"
