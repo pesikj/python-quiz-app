@@ -41,13 +41,19 @@
                   {% endfor %}
                 {% endif %}
                 {% if continue %}
-                  {% if not question.last_question %}
-                    <a href="{% url 'question' question.next_question.pk %}" class="btn btn-primary mt-3">Pokračovat</a>
+                  {% if next_question %}
+                    <a href="{% url 'question' next_question.pk %}" class="btn btn-primary mt-3">Pokračovat</a>
                   {% else %}
                     <a href="{% url 'quiz_list' question.quiz.course.pk %}" class="btn btn-primary mt-3">Dokončit</a>
                   {% endif %}
                 {% else %}
                   <button type="submit" class="btn btn-primary mt-3">Odeslat</button>
+                  {% if previous_question %}
+                    <a href="{% url 'question' previous_question.pk %}" class="btn btn-secondary mt-3">Předchozí</a>
+                  {% endif %}
+                  {% if next_question %}
+                    <a href="{% url 'question' next_question.pk %}" class="btn btn-secondary mt-3">Další</a>
+                  {% endif %}
                 {% endif %}
               </form>
 

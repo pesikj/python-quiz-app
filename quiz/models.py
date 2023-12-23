@@ -69,13 +69,18 @@ class Question(models.Model):
     type = models.CharField(max_length=2, choices=QUESTION_TYPES, default=SHORT_TEXT)
     order = models.IntegerField(default=0)
 
-    @property
-    def last_question(self):
-        return self.quiz.question_set.filter(order__gt=self.order).order_by("order").count() == 0
+    def last_question(self, user):
+        return self.next_question(user) is None
 
-    @property
-    def next_question(self):
-        return self.quiz.question_set.filter(order__gt=self.order).order_by("order").first()
+    def next_question(self, user):
+        user_answers = UserAnswer.objects.filter(question__quiz=self.quiz).values_list("question_id", flat=True)
+        return (self.quiz.question_set.filter(order__gt=self.order).filter(~Q(id__in=user_answers)).order_by("order")
+                .first())
+
+    def previous_question(self, user):
+        user_answers = UserAnswer.objects.filter(question__quiz=self.quiz).values_list("question_id", flat=True)
+        return (self.quiz.question_set.filter(order__lt=self.order).filter(~Q(id__in=user_answers)).order_by("order")
+                .last())
 
     def __str__(self):
         return self.text

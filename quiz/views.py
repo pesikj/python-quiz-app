@@ -46,22 +46,24 @@ class QuestionView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["quiz"] = self._quiz
+        context["next_question"] = self.object.next_question(self.request.user)
+        context["previous_question"] = self.object.previous_question(self.request.user)
         return context
 
     def post(self, request, *args, **kwargs):
         post_data = request.POST.copy()
         question_id = post_data['question_id']
         question = Question.objects.get(pk=int(question_id))
-        context = {"quiz": self._quiz}
+        context = {"quiz": self._quiz, "question": question, "next_question": question.next_question(self.request.user),
+                   "previous_question": question.previous_question(self.request.user)}
         if question.type in (Question.SHORT_TEXT, Question.LONG_TEXT):
             user_answer = UserAnswer.objects.create(question=question, answer_text=post_data["answer_text"],
                                                     user=self.request.user)
             user_answer.save()
-            context = {"quiz": self._quiz, "question": question, "feedback": [["", "Odpověď byla uložena"]],
-                       "continue": True}
+            context.update({"feedback": [["", "Odpověď byla uložena"]], "continue": True})
         elif question.type in (Question.MULTIPLE_CHOICE_SINGLE_ANSWER, Question.MULTIPLE_CHOICE_MULTIPLE_ANSWER):
             selected_options, is_correct, missing = question.evaluate_response(post_data, request.user)
-            context = {"quiz": self._quiz, "question": question, "missing": missing}
+            context.update({"missing": missing})
             if is_correct:
                 context["feedback_type"] = "success"
                 context["continue"] = True
