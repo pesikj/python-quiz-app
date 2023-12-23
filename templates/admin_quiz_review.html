@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h2>Přehled otázek kvízu</h2>
+    {% for item in questions %}
+      <div class="card mb-3">
+        <div class="card-header">
+          Otázka {{ item.order }}
+        </div>
+        <div class="card-body">
+          <h5 class="card-title">Zadání otázky</h5>
+          <p class="card-text">{{ item.text }}</p>
+          <a href="{% url 'question_update' item.pk %}" class="btn btn-primary">Upravit</a>
+          <a href="{% url 'question_delete' item.pk %}" class="btn btn-danger">Smazat</a>
+        </div>
+      </div>
+    {% empty %}
+      <p>Žádné otázky k přehledu.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

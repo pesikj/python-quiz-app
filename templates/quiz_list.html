@@ -16,13 +16,14 @@
             {% endif %}
           </div>
           {% if quiz_completion|get_item:quiz.id %}
-            <a href="{% url 'test_review' quiz.id %}" class="btn btn-primary">Zobrazit výsledky</a>
+            <a href="{% url 'quiz_review' quiz.id %}" class="btn btn-primary">Zobrazit výsledky</a>
           {% endif %}
           {% if quiz_questions|get_item:quiz.id %}
             <a href="{% url 'question' quiz_questions|get_item:quiz.id %}" class="btn btn-primary">Otevřít kvíz</a>
           {% endif %}
           {% if user.is_superuser %}
             <a href="{% url 'question_add' quiz.id %}" class="btn btn-primary">Přidat otázku</a>
+            <a href="{% url 'admin_quiz_review' quiz.id %}" class="btn btn-secondary">Přehled otázek</a>
           {% endif %}
         </li>
       {% empty %}

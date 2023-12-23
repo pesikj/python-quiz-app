@@ -4,11 +4,16 @@
 
 .btn-primary {
     background-color: #2d2e83;
-    border-color: #2d2e83;
 }
-.btn-primary:hover {
+
+.btn-secondary {
+    background-color: #939598;
+}
+
+.btn-danger {
     background-color: #e6007e;
 }
+
 .navbar {
     background-color: #2d2e83;
 }

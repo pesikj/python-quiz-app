@@ -3,7 +3,7 @@ from django.db.models import Max, Q
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
-from django.views.generic import DetailView, CreateView
+from django.views.generic import DetailView, CreateView, DeleteView, UpdateView
 from django.views.generic.list import ListView
 
 from .forms import CourseForm, QuizForm, QuestionForm
@@ -130,7 +130,7 @@ class QuestionAddView(UserPassesTestMixin, CreateView):
 class UserTestReviewView(LoginRequiredMixin, ListView):
     model = UserAnswer
     context_object_name = 'answers'
-    template_name = 'user_test_review.html'
+    template_name = 'user_quiz_review.html'
 
     @property
     def _quiz(self):
@@ -140,3 +140,30 @@ class UserTestReviewView(LoginRequiredMixin, ListView):
         quiz = self._quiz
         return UserAnswer.objects.filter(question__quiz=quiz).filter(user=self.request.user).order_by("question__order")
 
+
+class AdminQuizReviewView(UserPassesTestMixin, ListView):
+    model = Question
+    context_object_name = 'questions'
+    template_name = 'admin_quiz_review.html'
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+
+class QuestionDeleteView(DeleteView):
+    model = Question
+    template_name = "question_confirm_delete.html"
+    pk_url_kwarg = 'question_id'
+    
+    def get_success_url(self):
+        return reverse_lazy('admin_quiz_review', kwargs={'quiz_id': self.object.quiz.id})
+
+
+class QuestionUpdateView(UpdateView):
+    model = Question
+    form_class = QuestionForm
+    template_name = 'update_question.html'
+    pk_url_kwarg = 'question_id'
+
+    def get_success_url(self):
+        return reverse_lazy('admin_quiz_review', kwargs={'quiz_id': self.object.quiz.id})
