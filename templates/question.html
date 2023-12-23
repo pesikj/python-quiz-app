@@ -39,13 +39,22 @@
                     </div>
                   {% endfor %}
                 {% endif %}
-                <button type="submit" class="btn btn-primary mt-3">Odeslat</button>
+                {% if continue %}
+                  {% if not question.last_question %}
+                    <a href="{% url 'question' question.next_question.pk %}" class="btn btn-primary">Pokračovat</a>
+                  {% else %}
+                    <a href="{% url 'quiz_list' question.quiz.course.pk %}" class="btn btn-primary">Dokončit</a>
+                  {% endif %}
+                {% else %}
+                  <button type="submit" class="btn btn-primary mt-3">Odeslat</button>
+                {% endif %}
               </form>
             
               {% if feedback %}
                   <div class="mt-3">
                       <div class="alert alert-{{ feedback_type | default:'info' }}" role="alert">
                           <h4 class="alert-heading">Feedback</h4>
+                          <p class="feedback-text">Vybral(a) jsi odpověď: {{ selected_option.text }}</p>
                           <p class="feedback-text">{{ feedback }}</p>
                       </div>
                   </div>

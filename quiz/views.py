@@ -21,24 +21,13 @@ class QuizListView(LoginRequiredMixin, ListView):
     context_object_name = 'quizzes'
     template_name = 'quiz_list.html'
 
-    def _get_quiz_questions(self):
-        quiz_questions = {}
-        for quiz in self.get_queryset():
-            answered_questions = (UserAnswer.objects.filter(question__quiz=quiz).filter(user=self.request.user)
-                                  .values_list("question__quiz", flat=True))
-            if len(answered_questions) == 0:
-                quiz_questions[quiz.id] = quiz.question_set.order_by("order").first().pk
-                continue
-            current_question_query = quiz.question_set.filter(~Q(quiz_id__in=answered_questions))
-            if not current_question_query.exists():
-                quiz_questions[quiz.id] = None
-            else:
-                quiz_questions[quiz.id] = current_question_query.order_by("order").first().pk
-        return quiz_questions
+    def _get_course(self):
+        return Course.objects.get(pk=self.kwargs["course_id"])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["quiz_questions"] = self._get_quiz_questions()
+        context["quiz_questions"] = self._get_course().get_quiz_question_counts(self.request.user)
+        context["quiz_completion"] = self._get_course().quiz_completion_info(self.request.user)
         return context
 
     def get_queryset(self):
@@ -64,24 +53,31 @@ class QuestionView(LoginRequiredMixin, DetailView):
         question_id = post_data['question_id']
         question = Question.objects.get(pk=int(question_id))
         if question.type in (Question.SHORT_TEXT, Question.LONG_TEXT):
-            user_answer = UserAnswer.objects.create(question=question, answer_text=post_data["text"],
+            user_answer = UserAnswer.objects.create(question=question, answer_text=post_data["answer_text"],
                                                     user=self.request.user)
             user_answer.save()
-            return render(request, self.template_name, {"feedback": "Odpověď byla uložena"})
+            context = {"feedback": "Odpověď byla uložena"}
         elif question.type == Question.MULTIPLE_CHOICE_SINGLE_ANSWER:
             user_answer = int(post_data.get("selected_option"))
             correct_option = question.option_set.filter(is_correct=True).first()
+            selected_option = question.option_set.get(pk=user_answer)
+            feedback = selected_option.feedback
+            context = {"feedback": selected_option.feedback, "quiz": self._quiz, "question": question,
+                       "selected_option": selected_option}
             if user_answer == correct_option.pk:
-                return render(request, self.template_name, {"feedback": "Vybral(a) jsi správnou odpověď.",
-                                                            "quiz": self._quiz, "question": question,
-                                                            "feedback_type": "success"})
+                feedback = feedback if feedback else "Správná odpověď."
+                context["feedback"] = feedback
+                context["feedback_type"] = "success"
+                context["continue"] = True
+                user_answer_record = UserAnswer(question=question, user=request.user)
+                user_answer_record.save()
+                user_answer_record.selected_options.set([user_answer])
             else:
-                selected_option = question.option_set.filter(pk=user_answer).first()
-                return render(request, self.template_name, {"feedback": selected_option.feedback,
-                                                            "quiz": self._quiz, "question": question,
-                                                            "feedback_type": "warning"})
+                context["feedback_type"] = "warning"
         elif question.type == Question.MULTIPLE_CHOICE_MULTIPLE_ANSWER:
             selected_options = {key: value for key, value in post_data.items() if 'option_' in key}
+            context = {"quiz": self._quiz}
+        return render(request, self.template_name, context)
 
 
 class AddCourseView(LoginRequiredMixin, CreateView):
@@ -128,3 +124,18 @@ class AddQuestionView(LoginRequiredMixin, CreateView):
             return redirect(reverse_lazy("quiz_list", kwargs={"course_id": self._quiz.course.pk}))
         else:
             return render(request, self.template_name, {'form': form})
+
+
+class UserTestReviewView(LoginRequiredMixin, ListView):
+    model = UserAnswer
+    context_object_name = 'answers'
+    template_name = 'user_test_review.html'
+
+    @property
+    def _quiz(self):
+        return Quiz.objects.get(id=self.kwargs['quiz_id'])
+
+    def get_queryset(self):
+        quiz = self._quiz
+        return UserAnswer.objects.filter(question__quiz=quiz).filter(user=self.request.user).order_by("question__order")
+

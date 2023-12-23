@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h2>Test Review</h2>
+    {% for item in answers %}
+      <div class="card mb-3">
+        <div class="card-header">
+          Otázka {{ item.question.order }}
+        </div>
+        <div class="card-body">
+          <h5 class="card-title">Zadání otázky</h5>
+          <p class="card-text">{{ item.question.text }}</p>
+          <h6 class="card-title">Odpověď</h6>
+          <p class="card-text">{{ item.user_answer }}</p>
+          <h6 class="card-title">Zpětná vazba</h6>
+          {% if item.answer_feedback %}
+            <p class="card-text">{{ item.answer_feedback }}</p>
+          {% else %}
+            <p class="card-text">K této odpovědi zatím není zpětná vazba.</p>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <p>No questions to review.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

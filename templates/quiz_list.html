@@ -3,12 +3,21 @@
 
 {% block content %}
   <div class="container mt-5">
-    <h1>Courses</h1>
+    <h1>{{ course.title }}</h1>
     <ul class="list-group">
       {% for quiz in quizzes %}
         <li class="list-group-item">
-          <strong>{{ quiz.title }}</strong>
-          <p>{{ quiz.deadline }}</p>
+          <div class="mb-1">
+            <strong>{{ quiz.title }}</strong>
+          </div>
+          <div class="mb-3">
+            {% if quiz.deadline %}
+              <p>Termín pro dokončení: {{ quiz.deadline }}</p>
+            {% endif %}
+          </div>
+          {% if quiz_completion|get_item:quiz.id %}
+            <a href="{% url 'test_review' quiz.id %}" class="btn btn-primary">Zobrazit výsledky</a>
+          {% endif %}
           {% if quiz_questions|get_item:quiz.id %}
             <a href="{% url 'question' quiz_questions|get_item:quiz.id %}" class="btn btn-primary">Otevřít kvíz</a>
           {% endif %}
