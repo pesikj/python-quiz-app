@@ -1,9 +1,12 @@
 .btn {
-    background-color: #2d2e83;
-    border-color: #2d2e83;
     border-width: 0;
 }
-.btn:hover {
+
+.btn-primary {
+    background-color: #2d2e83;
+    border-color: #2d2e83;
+}
+.btn-primary:hover {
     background-color: #e6007e;
 }
 .navbar {
