@@ -52,35 +52,31 @@ class QuestionView(LoginRequiredMixin, DetailView):
         post_data = request.POST.copy()
         question_id = post_data['question_id']
         question = Question.objects.get(pk=int(question_id))
+        context = {"quiz": self._quiz}
         if question.type in (Question.SHORT_TEXT, Question.LONG_TEXT):
             user_answer = UserAnswer.objects.create(question=question, answer_text=post_data["answer_text"],
                                                     user=self.request.user)
             user_answer.save()
-            context = {"feedback": "Odpověď byla uložena"}
-        elif question.type == Question.MULTIPLE_CHOICE_SINGLE_ANSWER:
-            user_answer = int(post_data.get("selected_option"))
-            correct_option = question.option_set.filter(is_correct=True).first()
-            selected_option = question.option_set.get(pk=user_answer)
-            feedback = selected_option.feedback
-            context = {"feedback": selected_option.feedback, "quiz": self._quiz, "question": question,
-                       "selected_option": selected_option}
-            if user_answer == correct_option.pk:
-                feedback = feedback if feedback else "Správná odpověď."
-                context["feedback"] = feedback
+            context = {"quiz": self._quiz, "question": question, "feedback": [["", "Odpověď byla uložena"]],
+                       "continue": True}
+        elif question.type in (Question.MULTIPLE_CHOICE_SINGLE_ANSWER, Question.MULTIPLE_CHOICE_MULTIPLE_ANSWER):
+            selected_options, is_correct, missing = question.evaluate_response(post_data, request.user)
+            context = {"quiz": self._quiz, "question": question, "missing": missing}
+            if is_correct:
                 context["feedback_type"] = "success"
                 context["continue"] = True
-                user_answer_record = UserAnswer(question=question, user=request.user)
-                user_answer_record.save()
-                user_answer_record.selected_options.set([user_answer])
             else:
                 context["feedback_type"] = "warning"
-        elif question.type == Question.MULTIPLE_CHOICE_MULTIPLE_ANSWER:
-            selected_options = {key: value for key, value in post_data.items() if 'option_' in key}
-            context = {"quiz": self._quiz}
+            if question.type == Question.MULTIPLE_CHOICE_SINGLE_ANSWER:
+                context["feedback"] = [[selected_options.first().text, selected_options.first().calculated_feedback]]
+                context["selected_option"] = selected_options.first()
+            else:
+                context["feedback"] = [[x.text, x.calculated_feedback] for x in selected_options]
+                context["selected_options_ids"] = [selected_option.id for selected_option in selected_options]
         return render(request, self.template_name, context)
 
 
-class AddCourseView(UserPassesTestMixin, CreateView):
+class CourseAddView(UserPassesTestMixin, CreateView):
     model = Course
     form_class = CourseForm
     template_name = 'add_course.html'
@@ -90,7 +86,7 @@ class AddCourseView(UserPassesTestMixin, CreateView):
         return self.request.user.is_superuser
 
 
-class AddQuizView(UserPassesTestMixin, CreateView):
+class QuizAddView(UserPassesTestMixin, CreateView):
     model = Quiz
     form_class = QuizForm
     template_name = 'add_quiz.html'
@@ -100,7 +96,7 @@ class AddQuizView(UserPassesTestMixin, CreateView):
         return self.request.user.is_superuser
 
 
-class AddQuestionView(UserPassesTestMixin, CreateView):
+class QuestionAddView(UserPassesTestMixin, CreateView):
     model = Question
     form_class = QuestionForm
     template_name = 'add_question.html'
@@ -117,19 +113,13 @@ class AddQuestionView(UserPassesTestMixin, CreateView):
         form = QuestionForm(request.POST)
         post_data = request.POST.copy()
         if form.is_valid():
-            question = form.save(commit=False)
+            question: Question = form.save(commit=False)
             question.quiz = self._quiz
             max_order_value = Question.objects.filter(quiz=self._quiz).aggregate(Max('order'))['order__max']
             question.order = max_order_value + 1 if max_order_value else 1
             question.save()
             options_texts = {key: value for key, value in post_data.items() if 'option_text' in key}
-            for key, value in options_texts.items():
-                if value:
-                    option_number = int(key.replace('option_text_', ''))
-                    feedback = post_data.get(f"feedback_{option_number}")
-                    option = Option(question=question, text=value, feedback=feedback,
-                                    is_correct=f"is_correct_{option_number}" in post_data)
-                    option.save()
+            question.save_question_options(options_texts, post_data)
             return redirect(reverse_lazy("quiz_list", kwargs={"course_id": self._quiz.course.pk}))
         else:
             return render(request, self.template_name, {'form': form})

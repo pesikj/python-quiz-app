@@ -28,14 +28,14 @@
         <!-- JavaScript will add options here -->
       </div>
 
-      <button type="submit" class="btn btn-primary">Add Question</button>
+      <button type="submit" class="btn btn-primary">Přidat otázku</button>
     </form>
   </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    const add_option = (optionsContainer, i) => {
+    const add_multiple_correct_option = (optionsContainer, i) => {
         optionsContainer.innerHTML +=
             '<div class="form-group">' +
             '<label for="option_text' + i + '">Možnost ' + i + '</label>' +
@@ -45,21 +45,36 @@
             '<textarea class="form-control" id="feedback_' + i + '" name="feedback_' + i + '" rows="3" placeholder="Zpětná vazba pro možnost ' + i + '"></textarea></div>';
         return optionsContainer;
     }
+    const add_single_correct_option = (optionsContainer, i, correct) => {
+        const title = correct ? "Správná možnost" : "Nesprávná možnost";
+        optionsContainer.innerHTML +=
+            '<div class="form-group">' +
+            '<label for="option_text' + i + '">' + title + '</label>' +
+            '<input type="text" class="form-control" id="option_text' + i + '" name="option_text_' + i + '">' +
+            '<textarea class="form-control" id="feedback_' + i + '" name="feedback_' + i + '" rows="3" placeholder="Zpětná vazba pro možnost ' + i + '"></textarea>' +
+            '</div>';
+        return optionsContainer;
+    }
     document.getElementById("type").addEventListener("change", function () {
         const type = this.value;
         let optionsContainer = document.getElementById('multipleChoiceOptions');
+        optionsContainer.innerHTML = "";
 
         if (type === 'MC' || type === 'MM') {
             optionsContainer.innerHTML = "";
             optionsContainer.style.display = "block";
-
-            // Add three sets of option fields
-            for (let i = 1; i <= 3; i++) {
-                optionsContainer = add_option(optionsContainer, i);
+            if (type === 'MM') {
+                for (let i = 1; i <= 3; i++) {
+                    optionsContainer = add_multiple_correct_option(optionsContainer, i);
+                }  
+            }
+            else {
+              for (let i = 1; i <= 3; i++) {
+                  optionsContainer = add_single_correct_option(optionsContainer, i, i === 1);
+              }
             }
         } else {
-            optionsContainer.style.display = 'none';
-            optionsContainer.innerHTML = '';
+            optionsContainer.style.display = "none";
         }
     });
 </script>
