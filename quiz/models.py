@@ -86,16 +86,25 @@ class Question(models.Model):
         return self.text
 
     def save_question_options(self, options_texts, post_data):
-        for key, value in options_texts.items():
-            if value:
-                option_number = int(key.replace('option_text_', ''))
-                feedback = post_data.get(f"feedback_{option_number}")
-                if self.type == Question.MULTIPLE_CHOICE_SINGLE_ANSWER:
-                    is_correct = option_number == 1
-                else:
-                    is_correct = f"is_correct_{option_number}" in post_data
-                option = Option(question=self, text=value, feedback=feedback, is_correct=is_correct)
-                option.save()
+        if self.type in (Question.SHORT_TEXT, Question.LONG_TEXT):
+            self.option_set.all().delete()
+        else:
+            for key, value in options_texts.items():
+                if value:
+                    option_number = int(key.replace('option_text_', ''))
+                    feedback = post_data.get(f"feedback_{option_number}")
+                    if self.type == Question.MULTIPLE_CHOICE_SINGLE_ANSWER:
+                        is_correct = option_number == 1
+                    else:
+                        is_correct = f"is_correct_{option_number}" in post_data
+                    if f"option_id_{option_number}" in post_data:
+                        option = Option.objects.get(pk=post_data[f"option_id_{option_number}"])
+                    else:
+                        option = Option(question=self)
+                    option.text = value
+                    option.feedback = feedback
+                    option.is_correct = is_correct
+                    option.save()
 
     def evaluate_response(self, post_data, user):
         is_correct = True

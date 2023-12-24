@@ -11,6 +11,17 @@
         <div class="card-body">
           <h5 class="card-title">Zadání otázky</h5>
           <p class="card-text">{{ item.text }}</p>
+          {% if item.option_set %}
+          <ul>
+            {% for option in item.option_set.all %}
+              {% if option.is_correct %}
+                <li><b>{{ option.text }}</b></li>
+              {% else %}
+                <li>{{ option.text }}</li>
+              {% endif %}
+            {% endfor %}
+          </ul>
+          {% endif %}
           <a href="{% url 'question_update' item.pk %}" class="btn btn-primary">Upravit</a>
           <a href="{% url 'question_delete' item.pk %}" class="btn btn-danger">Smazat</a>
         </div>

@@ -8,24 +8,22 @@
       <div class="invalid-feedback">{{ form.errors }}</div>
       <!-- Question Text -->
       <div class="form-group">
-        <label for="questionText">Question Text</label>
+        <label for="questionText">Text otázky</label>
         <input type="text" class="form-control" id="text" name="text" required>
       </div>
 
       <!-- Question Type -->
       <div class="form-group">
-        <label for="questionType">Question Type</label>
+        <label for="questionType">Typ</label>
         <select class="form-control" id="type" name="type">
-          <option value="ST">Short Text</option>
-          <option value="LT">Long Text</option>
-          <option value="MC">Multiple Choice - Single Answer</option>
-          <option value="MM">Multiple Choice - Multiple Answers</option>
+          <option value="ST">Otevřená (krátká)</option>
+          <option value="LT">Otevřená (dlouhá)</option>
+          <option value="MC">Testová (1 správná možnost)</option>
+          <option value="MM">Testová (více správných možností)</option>
         </select>
       </div>
-
-      <!-- Placeholder for Multiple Choice Options -->
+      
       <div id="multipleChoiceOptions" style="display:none;">
-        <!-- JavaScript will add options here -->
       </div>
 
       <button type="submit" class="btn btn-primary">Přidat otázku</button>

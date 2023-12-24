@@ -165,5 +165,22 @@ class QuestionUpdateView(UpdateView):
     template_name = 'update_question.html'
     pk_url_kwarg = 'question_id'
 
+    @property
+    def _quiz(self):
+        return self.get_object().quiz
+
     def get_success_url(self):
-        return reverse_lazy('admin_quiz_review', kwargs={'quiz_id': self.object.quiz.id})
+        return reverse_lazy('admin_quiz_review', kwargs={'quiz_id': self.get_object().quiz.id})
+
+    def post(self, request, *args, **kwargs):
+        form = QuestionForm(request.POST, instance=self.get_object())
+        post_data = request.POST.copy()
+        if form.is_valid():
+            question: Question = form.save(commit=False)
+            question.quiz = self._quiz
+            question.save()
+            options_texts = {key: value for key, value in post_data.items() if 'option_text' in key}
+            question.save_question_options(options_texts, post_data)
+            return redirect(self.get_success_url())
+        else:
+            return render(request, self.template_name, {'form': form})

@@ -1,22 +1,35 @@
 <script>
-    const add_multiple_correct_option = (optionsContainer, i) => {
-        optionsContainer.innerHTML +=
-            '<div class="form-group">' +
-            '<label for="option_text' + i + '">Možnost ' + i + '</label>' +
-            '<input type="text" class="form-control" id="option_text' + i + '" name="option_text_' + i + '">' +
-            '<div class="form-check"><input class="form-check-input" type="checkbox" id="is_correct_' + i + '" name="is_correct_' + i + '">' +
-            '<label class="form-check-label" for="is_correct_' + i + '">Správná odpověď</label></div>' +
-            '<textarea class="form-control" id="feedback_' + i + '" name="feedback_' + i + '" rows="3" placeholder="Zpětná vazba pro možnost ' + i + '"></textarea></div>';
+    const add_multiple_correct_option = (i, correct=false, value="", option_id=null) => {
+        const optionsContainer = document.getElementById('multipleChoiceOptions');
+        const checked = correct ? "checked" : "";
+        optionsContainer.innerHTML += `
+            <div class="form-group">
+                <label for="option_text${i}">Možnost ${i}</label>
+                <input type="text" class="form-control" id="option_text${i}" name="option_text_${i}" value="${value}">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="is_correct_${i}" name="is_correct_${i}" ${checked}>
+                    <label class="form-check-label" for="is_correct_${i}">Správná odpověď</label>
+                </div>
+                <textarea class="form-control" id="feedback_${i}" name="feedback_${i}" rows="3" placeholder="Zpětná vazba pro možnost ${i}"></textarea>
+            </div>`;
+        if (option_id) {
+            optionsContainer.innerHTML += `<input type="hidden" name="option_id_${i}" value="${option_id}">`
+        }
         return optionsContainer;
+
     }
-    const add_single_correct_option = (optionsContainer, i, correct) => {
+    const add_single_correct_option = (i, correct, value="", option_id=null) => {
+        const optionsContainer = document.getElementById('multipleChoiceOptions');
         const title = correct ? "Správná možnost" : "Nesprávná možnost";
-        optionsContainer.innerHTML +=
-            '<div class="form-group">' +
-            '<label for="option_text' + i + '">' + title + '</label>' +
-            '<input type="text" class="form-control" id="option_text' + i + '" name="option_text_' + i + '">' +
-            '<textarea class="form-control" id="feedback_' + i + '" name="feedback_' + i + '" rows="3" placeholder="Zpětná vazba pro možnost ' + i + '"></textarea>' +
-            '</div>';
+        optionsContainer.innerHTML += `
+            <div class="form-group">
+                <label for="option_text${i}">${title}</label>
+                <input type="text" class="form-control" id="option_text${i}" name="option_text_${i}" value="${value}">
+                <textarea class="form-control" id="feedback_${i}" name="feedback_${i}" rows="3" placeholder="Zpětná vazba pro možnost ${i}"></textarea>
+            </div>`;
+        if (option_id) {
+            optionsContainer.innerHTML += `<input type="hidden" name="option_id_${i}" value="${option_id}">`
+        }
         return optionsContainer;
     }
     document.getElementById("type").addEventListener("change", function () {
@@ -29,16 +42,21 @@
             optionsContainer.style.display = "block";
             if (type === 'MM') {
                 for (let i = 1; i <= 3; i++) {
-                    optionsContainer = add_multiple_correct_option(optionsContainer, i);
+                    add_multiple_correct_option(i);
                 }
             }
             else {
-              for (let i = 1; i <= 3; i++) {
-                  optionsContainer = add_single_correct_option(optionsContainer, i, i === 1);
-              }
+                for (let i = 1; i <= 3; i++) {
+                    add_single_correct_option(i, i === 1);
+                }
             }
         } else {
             optionsContainer.style.display = "none";
         }
     });
+    
+    const set_question_type_select_value = (question_type) => {
+        const selectElement = document.getElementById("type");
+        selectElement.value = question_type;
+    }
 </script>

@@ -2,37 +2,49 @@
 
 {% block content %}
   <div class="container mt-5">
-    <h2>Add New Question</h2>
+    <h2>Úprava otázky {{ object.order }}</h2>
     <form method="post" id="questionForm">
       {% csrf_token %}
       <div class="invalid-feedback">{{ form.errors }}</div>
       <!-- Question Text -->
       <div class="form-group">
-        <label for="questionText">Question Text</label>
+        <label for="questionText">Test otázky</label>
         <input type="text" class="form-control" id="text" name="text" required value="{{ object.text }}">
+        <input type="hidden" name="object_id" value="{{ object.id }}">
       </div>
 
       <!-- Question Type -->
       <div class="form-group">
-        <label for="questionType">Question Type</label>
+        <label for="questionType">Typ</label>
         <select class="form-control" id="type" name="type">
-          <option value="ST">Short Text</option>
-          <option value="LT">Long Text</option>
-          <option value="MC">Multiple Choice - Single Answer</option>
-          <option value="MM">Multiple Choice - Multiple Answers</option>
+          <option value="ST">Otevřená (krátká)</option>
+          <option value="LT">Otevřená (dlouhá)</option>
+          <option value="MC">Testová (1 správná možnost)</option>
+          <option value="MM">Testová (více správných možností)</option>
         </select>
       </div>
 
-      <!-- Placeholder for Multiple Choice Options -->
-      <div id="multipleChoiceOptions" style="display:none;">
-        <!-- JavaScript will add options here -->
+      <div id="multipleChoiceOptions" {% if object.type == "ST" or object.type == "LT" %}style="display:none;"{% endif %}>
+
       </div>
 
-      <button type="submit" class="btn btn-primary">Přidat otázku</button>
+      <button type="submit" class="btn btn-primary">Upravit otázku</button>
     </form>
   </div>
 {% endblock %}
 
 {% block scripts %}
   {% include "partial/question_edit_form_script.html" %}
+  <script>
+      set_question_type_select_value("{{ object.type }}");
+      {% if object.type == "MC" %}
+          {% for option in object.option_set.all %}
+              add_single_correct_option({{ forloop.counter }}, {% if option.is_correct %}true{% else %}false{% endif %}, "{{ option.text }}", {{ option.id }});
+          {% endfor %}
+      {% elif object.type == "MM" %}
+          {% for option in object.option_set.all %}
+              add_multiple_correct_option({{ forloop.counter }}, {% if option.is_correct %}true{% else %}false{% endif %}, "{{ option.text }}", {{ option.id }});
+          {% endfor %}
+      {% endif %}
+  </script>
 {% endblock %}
