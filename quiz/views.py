@@ -150,7 +150,7 @@ class AdminQuizReviewView(UserPassesTestMixin, ListView):
         return self.request.user.is_superuser
 
 
-class QuestionDeleteView(DeleteView):
+class QuestionDeleteView(UserPassesTestMixin, DeleteView):
     model = Question
     template_name = "question_confirm_delete.html"
     pk_url_kwarg = 'question_id'
@@ -158,8 +158,11 @@ class QuestionDeleteView(DeleteView):
     def get_success_url(self):
         return reverse_lazy('admin_quiz_review', kwargs={'quiz_id': self.object.quiz.id})
 
+    def test_func(self):
+        return self.request.user.is_superuser
 
-class QuestionUpdateView(UpdateView):
+
+class QuestionUpdateView(UserPassesTestMixin, UpdateView):
     model = Question
     form_class = QuestionForm
     template_name = 'update_question.html'
@@ -171,6 +174,9 @@ class QuestionUpdateView(UpdateView):
 
     def get_success_url(self):
         return reverse_lazy('admin_quiz_review', kwargs={'quiz_id': self.get_object().quiz.id})
+
+    def test_func(self):
+        return self.request.user.is_superuser
 
     def post(self, request, *args, **kwargs):
         form = QuestionForm(request.POST, instance=self.get_object())
