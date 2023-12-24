@@ -8,24 +8,22 @@
       <div class="invalid-feedback">{{ form.errors }}</div>
       <!-- Question Text -->
       <div class="form-group">
-        <label for="questionText">Question Text</label>
+        <label for="questionText">Text otázky</label>
         <input type="text" class="form-control" id="text" name="text" required>
       </div>
 
       <!-- Question Type -->
       <div class="form-group">
-        <label for="questionType">Question Type</label>
+        <label for="questionType">Typ</label>
         <select class="form-control" id="type" name="type">
-          <option value="ST">Short Text</option>
-          <option value="LT">Long Text</option>
-          <option value="MC">Multiple Choice - Single Answer</option>
-          <option value="MM">Multiple Choice - Multiple Answers</option>
+          <option value="ST">Otevřená (krátká)</option>
+          <option value="LT">Otevřená (dlouhá)</option>
+          <option value="MC">Testová (1 správná možnost)</option>
+          <option value="MM">Testová (více správných možností)</option>
         </select>
       </div>
-
-      <!-- Placeholder for Multiple Choice Options -->
+      
       <div id="multipleChoiceOptions" style="display:none;">
-        <!-- JavaScript will add options here -->
       </div>
 
       <button type="submit" class="btn btn-primary">Přidat otázku</button>
@@ -34,48 +32,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-    const add_multiple_correct_option = (optionsContainer, i) => {
-        optionsContainer.innerHTML +=
-            '<div class="form-group">' +
-            '<label for="option_text' + i + '">Možnost ' + i + '</label>' +
-            '<input type="text" class="form-control" id="option_text' + i + '" name="option_text_' + i + '">' +
-            '<div class="form-check"><input class="form-check-input" type="checkbox" id="is_correct_' + i + '" name="is_correct_' + i + '">' +
-            '<label class="form-check-label" for="is_correct_' + i + '">Správná odpověď</label></div>' +
-            '<textarea class="form-control" id="feedback_' + i + '" name="feedback_' + i + '" rows="3" placeholder="Zpětná vazba pro možnost ' + i + '"></textarea></div>';
-        return optionsContainer;
-    }
-    const add_single_correct_option = (optionsContainer, i, correct) => {
-        const title = correct ? "Správná možnost" : "Nesprávná možnost";
-        optionsContainer.innerHTML +=
-            '<div class="form-group">' +
-            '<label for="option_text' + i + '">' + title + '</label>' +
-            '<input type="text" class="form-control" id="option_text' + i + '" name="option_text_' + i + '">' +
-            '<textarea class="form-control" id="feedback_' + i + '" name="feedback_' + i + '" rows="3" placeholder="Zpětná vazba pro možnost ' + i + '"></textarea>' +
-            '</div>';
-        return optionsContainer;
-    }
-    document.getElementById("type").addEventListener("change", function () {
-        const type = this.value;
-        let optionsContainer = document.getElementById('multipleChoiceOptions');
-        optionsContainer.innerHTML = "";
-
-        if (type === 'MC' || type === 'MM') {
-            optionsContainer.innerHTML = "";
-            optionsContainer.style.display = "block";
-            if (type === 'MM') {
-                for (let i = 1; i <= 3; i++) {
-                    optionsContainer = add_multiple_correct_option(optionsContainer, i);
-                }  
-            }
-            else {
-              for (let i = 1; i <= 3; i++) {
-                  optionsContainer = add_single_correct_option(optionsContainer, i, i === 1);
-              }
-            }
-        } else {
-            optionsContainer.style.display = "none";
-        }
-    });
-</script>
+  {% include "partial/question_edit_form_script.html" %}
 {% endblock %}
