@@ -1,11 +1,11 @@
 <script>
-    const add_multiple_correct_option = (i, correct=false, value="", option_id=null) => {
+    const add_multiple_correct_option = (i, correct = false, value = "", option_id = null) => {
         const optionsContainer = document.getElementById('multipleChoiceOptions');
         const checked = correct ? "checked" : "";
         optionsContainer.innerHTML += `
             <div class="form-group">
                 <label for="option_text${i}">Možnost ${i}</label>
-                <input type="text" class="form-control mb-1" id="option_text${i}" name="option_text_${i}" value="${value}">
+                <input type="text" class="form-control mb-1" id="option_text_${i}" name="option_text_${i}" value="${value}">
                 <div class="form-check mb-2">
                     <input class="form-check-input" type="checkbox" id="is_correct_${i}" name="is_correct_${i}" ${checked}>
                     <label class="form-check-label" for="is_correct_${i}">Správná odpověď</label>
@@ -18,13 +18,13 @@
         return optionsContainer;
 
     }
-    const add_single_correct_option = (i, correct, value="", option_id=null) => {
+    const add_single_correct_option = (i, correct = false, value = "", option_id = null) => {
         const optionsContainer = document.getElementById('multipleChoiceOptions');
         const title = correct ? "Správná možnost" : "Nesprávná možnost";
         optionsContainer.innerHTML += `
             <div class="form-group">
                 <label for="option_text${i}">${title}</label>
-                <input type="text" class="form-control mb-2" id="option_text${i}" name="option_text_${i}" value="${value}">
+                <input type="text" class="form-control mb-2" id="option_text_${i}" name="option_text_${i}" value="${value}">
                 <textarea class="form-control" id="feedback_${i}" name="feedback_${i}" rows="3" placeholder="Zpětná vazba pro možnost ${i}"></textarea>
             </div>`;
         if (option_id) {
@@ -36,6 +36,7 @@
         const type = this.value;
         let optionsContainer = document.getElementById('multipleChoiceOptions');
         optionsContainer.innerHTML = "";
+        handle_option_add_button_visibility();
 
         if (type === 'MC' || type === 'MM') {
             optionsContainer.innerHTML = "";
@@ -44,8 +45,7 @@
                 for (let i = 1; i <= 3; i++) {
                     add_multiple_correct_option(i);
                 }
-            }
-            else {
+            } else {
                 for (let i = 1; i <= 3; i++) {
                     add_single_correct_option(i, i === 1);
                 }
@@ -54,9 +54,51 @@
             optionsContainer.style.display = "none";
         }
     });
-    
+
     const set_question_type_select_value = (question_type) => {
         const selectElement = document.getElementById("type");
         selectElement.value = question_type;
     }
+    
+    const handle_option_add_button_visibility = () => {
+        const add_option_button = document.getElementById("options-add");
+        const type_selection = document.getElementById("type");
+        if (type_selection.value === 'MC' || type_selection.value === 'MM') {
+            add_option_button.style.display = null;
+        } else {
+            add_option_button.style.display = "none";
+        }
+    }
+
+    const find_maximum_number = () => {
+        let max_number = 0;
+        const container = document.getElementById('multipleChoiceOptions');
+        const inputs = container.getElementsByTagName('input');
+
+        for (let input of inputs) {
+            if (input.id.includes('option_text_')) {
+                const number = parseInt(input.id.replace('option_text_', ''), 10);
+                if (number > max_number) {
+                    max_number = number;
+                }
+            }
+        }
+        return max_number;
+    }
+
+    const options_add_button = document.getElementById("options-add");
+    options_add_button.onclick = (e) => {
+        let optionsContainer = document.getElementById('multipleChoiceOptions');
+        const type_selection = document.getElementById("type");
+        if (type_selection.value === 'MC') {
+            add_single_correct_option(find_maximum_number() + 1);
+        } else if (type_selection.value === 'MM') {
+            add_multiple_correct_option(find_maximum_number() + 1);
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', (event) => {
+        handle_option_add_button_visibility();
+    });
+    
 </script>
