@@ -5,8 +5,8 @@
         optionsContainer.innerHTML += `
             <div class="form-group">
                 <label for="option_text${i}">Možnost ${i}</label>
-                <input type="text" class="form-control" id="option_text${i}" name="option_text_${i}" value="${value}">
-                <div class="form-check">
+                <input type="text" class="form-control mb-1" id="option_text${i}" name="option_text_${i}" value="${value}">
+                <div class="form-check mb-2">
                     <input class="form-check-input" type="checkbox" id="is_correct_${i}" name="is_correct_${i}" ${checked}>
                     <label class="form-check-label" for="is_correct_${i}">Správná odpověď</label>
                 </div>
@@ -24,7 +24,7 @@
         optionsContainer.innerHTML += `
             <div class="form-group">
                 <label for="option_text${i}">${title}</label>
-                <input type="text" class="form-control" id="option_text${i}" name="option_text_${i}" value="${value}">
+                <input type="text" class="form-control mb-2" id="option_text${i}" name="option_text_${i}" value="${value}">
                 <textarea class="form-control" id="feedback_${i}" name="feedback_${i}" rows="3" placeholder="Zpětná vazba pro možnost ${i}"></textarea>
             </div>`;
         if (option_id) {

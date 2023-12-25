@@ -133,6 +133,7 @@ class Option(models.Model):
     text = models.CharField(max_length=200)
     is_correct = models.BooleanField(default=False)
     feedback = models.TextField(null=True, blank=True)
+    option_order = models.IntegerField(null=True, blank=True)
 
     @property
     def calculated_feedback(self):
@@ -149,14 +150,17 @@ class Option(models.Model):
 
 class UserAnswer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, on_delete=models.RESTRICT)
     selected_options = models.ManyToManyField(Option)
     answered_on = models.DateTimeField(auto_now_add=True)
     answer_text = models.TextField(null=True, blank=True)
     admin_feedback = models.TextField(null=True, blank=True)
     ai_feedback = models.TextField(null=True, blank=True)
     points = models.IntegerField(null=True, blank=True)
-
+    admin_feedback_on = models.DateTimeField(null=True, blank=True)
+    ai_feedback_on = models.DateTimeField(null=True, blank=True)
+    admin_feedback_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                          related_name="feedback_set")
     @property
     def user_answer(self):
         if self.question.type in (Question.SHORT_TEXT, Question.LONG_TEXT):

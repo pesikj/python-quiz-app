@@ -1,9 +1,10 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.db.models import Max, Q
+from django.db.models import Max, Q, Count, Case, When, IntegerField
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
-from django.views.generic import DetailView, CreateView, DeleteView, UpdateView
+from django.utils import timezone
+from django.views.generic import DetailView, CreateView, DeleteView, UpdateView, TemplateView
 from django.views.generic.list import ListView
 
 from .forms import CourseForm, QuizForm, QuestionForm
@@ -154,7 +155,7 @@ class QuestionDeleteView(UserPassesTestMixin, DeleteView):
     model = Question
     template_name = "question_confirm_delete.html"
     pk_url_kwarg = 'question_id'
-    
+
     def get_success_url(self):
         return reverse_lazy('admin_quiz_review', kwargs={'quiz_id': self.object.quiz.id})
 
@@ -190,3 +191,72 @@ class QuestionUpdateView(UserPassesTestMixin, UpdateView):
             return redirect(self.get_success_url())
         else:
             return render(request, self.template_name, {'form': form})
+
+
+class QuizFeedbackBaseListView(UserPassesTestMixin, TemplateView):
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def _get_user_answers_query(self):
+        UserAnswer.objects.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_answers_query = self._get_user_answers_query()
+        context["user_quizzes"] = (self._get_user_answers_query()
+                                   .filter(question__type__in=[Question.SHORT_TEXT, Question.LONG_TEXT])
+                                   .values('user__id', 'user__username', "question__quiz__id", "question__quiz__title")
+                                   .annotate(total=Count('question__id', distinct=True),
+                                             feedback_missing=Count(Case(When(admin_feedback__isnull=True, then=1),
+                                                                         output_field=IntegerField()), distinct=True)
+                                             ))
+        return context
+
+
+class QuizFeedbackListView(QuizFeedbackBaseListView):
+    template_name = "admin_quiz_answers_feedback_list.html"
+
+    def _get_user_answers_query(self):
+        return UserAnswer.objects.filter(question__quiz=self.kwargs["quiz_id"])
+    
+    
+class CourseFeedbackListView(QuizFeedbackBaseListView):
+    template_name = "admin_course_answers_feedback_list.html"
+
+    def _get_user_answers_query(self):
+        return UserAnswer.objects.filter(question__quiz__course=self.kwargs["course_id"])
+
+
+class QuizFeedbackView(UserPassesTestMixin, ListView):
+    model = UserAnswer
+    context_object_name = 'user_answers'
+    template_name = 'admin_quiz_answers_feedback.html'
+
+    @property
+    def _quiz(self):
+        return Quiz.objects.get(id=self.kwargs['quiz_id'])
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_queryset(self):
+        return UserAnswer.objects.filter(question__quiz=self.kwargs["quiz_id"], user__id=self.kwargs["user_id"],
+                                         question__type__in=[Question.SHORT_TEXT, Question.LONG_TEXT])
+
+    def get_success_url(self):
+        return reverse_lazy("admin_quiz_list", kwargs={'quiz_id': self._quiz.id})
+
+    def post(self, request, *args, **kwargs):
+        post_data = request.POST.copy()
+        feedback_texts = {key: value for key, value in post_data.items() if 'feedback_' in key}
+        for key, value in feedback_texts.items():
+            user_answer = UserAnswer.objects.get(pk=int(key.replace("feedback_", "")))
+            user_answer.admin_feedback = value if value else None
+            user_answer.admin_feedback_on = timezone.now()
+            user_answer.admin_feedback_by = self.request.user
+            user_answer.save()
+        else:
+            user_answer.admin_feedback_on = None
+            user_answer.admin_feedback_by = None
+            user_answer.save()
+        return redirect(self.get_success_url())

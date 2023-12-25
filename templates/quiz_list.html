@@ -23,6 +23,7 @@
           {% endif %}
           {% if user.is_superuser %}
             <a href="{% url 'question_add' quiz.id %}" class="btn btn-primary">Přidat otázku</a>
+            <a href="{% url 'admin_quiz_list' quiz.id %}" class="btn btn-primary">Zpětná vazba</a>
             <a href="{% url 'admin_quiz_review' quiz.id %}" class="btn btn-secondary">Přehled otázek</a>
           {% endif %}
         </li>
