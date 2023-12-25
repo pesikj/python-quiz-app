@@ -8,10 +8,11 @@
       <div class="invalid-feedback">{{ form.errors }}</div>
       <!-- Question Text -->
       <div class="form-group">
-        <label for="questionText">Test otázky</label>
-        <input type="text" class="form-control" id="text" name="text" required value="{{ object.text }}">
         <input type="hidden" name="object_id" value="{{ object.id }}">
+        <label for="questionText">Test otázky</label>
+        <textarea class="form-control" id="text" name="text" required rows="3">{{ object.text }}</textarea>
       </div>
+    
 
       <!-- Question Type -->
       <div class="form-group">
@@ -27,7 +28,7 @@
       <div id="multipleChoiceOptions" {% if object.type == "ST" or object.type == "LT" %}style="display:none;"{% endif %}>
 
       </div>
-
+      <a class="btn btn-secondary text-white" id="options-add" style="display: none;">Přidat možnosti</a>
       <button type="submit" class="btn btn-primary">Upravit otázku</button>
     </form>
   </div>
