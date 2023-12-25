@@ -23,7 +23,7 @@
           </ul>
           {% endif %}
           <a href="{% url 'question_update' item.pk %}" class="btn btn-primary">Upravit</a>
-          <a href="{% url 'question_delete' item.pk %}" class="btn btn-danger">Smazat</a>
+          <a href="{% url 'question_delete' item.pk %}" class="btn btn-danger {% if item.useranswer_set.count %}disabled{% endif %}">Smazat</a>
         </div>
       </div>
     {% empty %}

@@ -3,29 +3,33 @@
 {% block content %}
   <div class="container mt-5">
     <h2>Výsledek kvízu</h2>
-    {% for item in answers %}
+    {% for answer in answers %}
       <div class="card mb-3">
         <div class="card-header">
-          Otázka {{ item.question.order }}
+          Otázka {{ answer.question.order }}
         </div>
         <div class="card-body">
-          <h5 class="card-title">Zadání otázky</h5>
-          <p class="card-text">{{ item.question.text }}</p>
-          <h6 class="card-title">Odpověď</h6>
+          <p class="card-text">{{ answer.question.text }}</p>
+          <h6 class="card-title">Tvoje dpověď</h6>
           <p class="card-text">
             {% autoescape off %}
-              {{ item.user_answer }}
+              {{ answer.user_answer }}
             {% endautoescape %}
           </p>
-          {% if item.answer_feedback %}
+          {% if answer.answer_feedback %}
             <h6 class="card-title">Zpětná vazba</h6>
             <p class="card-text">
               {% autoescape off %}
-                {{ item.answer_feedback }}
+                {{ answer.answer_feedback }}
               {% endautoescape %}
             </p>
           {% endif %}
         </div>
+        {% if answer.admin_feedback_on %}
+          <div class="card-footer">
+            <small class="text-muted">Zpětnou vazbu zadal(a) {{ answer.admin_feedback_by.username }} dne {{ answer.admin_feedback_on }}</small>
+          </div>
+        {% endif %}
       </div>
     {% empty %}
       <p>No questions to review.</p>

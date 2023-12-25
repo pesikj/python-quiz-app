@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h2 class="mb-3">Zpětná vazba</h2>
+    <form method="post">
+      {% csrf_token %}
+      {% for answer in user_answers %}
+        <div class="card mb-3">
+          <div class="card-header">
+            Otázka {{ answer.question.order }}
+          </div>
+          <div class="card-body">
+            <h5 class="card-title">Text otázky</h5>
+            <p class="card-text">{{ answer.question.text }}</p>
+            <h6 class="card-title">Tvoje odpověď</h6>
+            <p class="card-text">{{ answer.answer_text }}</p>
+            {% if answer.ai_feedback %}
+              <h6 class="card-title">Zpětná vazba AI</h6>
+              <p class="card-text">{{ answer.ai_feedback }}</p>
+            {% endif %}
+            <div class="form-group">
+              <label for="feedback_{{ answer.id }}">Zpětná vazba kouče/koučky</label>
+              <textarea id="feedback_{{ answer.id }}" name="feedback_{{ answer.id }}" class="form-control">{{ answer.admin_feedback | default:"" }}</textarea>
+            </div>
+          </div>
+          {% if answer.admin_feedback_on %}
+            <div class="card-footer">
+              <small class="text-muted">Zpětnou vazbu zadal(a) {{ answer.admin_feedback_by.username }} dne {{ answer.admin_feedback_on }}</small>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <button type="submit" class="btn btn-primary">Uložit</button>
+    </form>
+  </div>
+{% endblock %}
