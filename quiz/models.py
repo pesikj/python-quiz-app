@@ -147,6 +147,9 @@ class Option(models.Model):
     def __str__(self):
         return self.text
 
+    class Meta:
+        unique_together = ('question', 'text',)
+
 
 class UserAnswer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -185,4 +188,7 @@ class UserAnswer(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s answer to {self.question.text}"
+
+    class Meta:
+        unique_together = ('user', 'question',)
 
