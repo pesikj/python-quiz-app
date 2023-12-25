@@ -198,7 +198,7 @@ class QuizFeedbackBaseListView(UserPassesTestMixin, TemplateView):
         return self.request.user.is_superuser
 
     def _get_user_answers_query(self):
-        UserAnswer.objects.all()
+        return UserAnswer.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -251,12 +251,14 @@ class QuizFeedbackView(UserPassesTestMixin, ListView):
         feedback_texts = {key: value for key, value in post_data.items() if 'feedback_' in key}
         for key, value in feedback_texts.items():
             user_answer = UserAnswer.objects.get(pk=int(key.replace("feedback_", "")))
-            user_answer.admin_feedback = value if value else None
-            user_answer.admin_feedback_on = timezone.now()
-            user_answer.admin_feedback_by = self.request.user
-            user_answer.save()
-        else:
-            user_answer.admin_feedback_on = None
-            user_answer.admin_feedback_by = None
-            user_answer.save()
+            if value:
+                user_answer.admin_feedback = value
+                user_answer.admin_feedback_on = timezone.now()
+                user_answer.admin_feedback_by = self.request.user
+                user_answer.save()
+            else:
+                user_answer.admin_feedback = None
+                user_answer.admin_feedback_on = None
+                user_answer.admin_feedback_by = None
+                user_answer.save()
         return redirect(self.get_success_url())
