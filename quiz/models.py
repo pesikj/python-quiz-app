@@ -95,6 +95,7 @@ class Question(models.Model):
     type = models.CharField(max_length=2, choices=QUESTION_TYPES, default=SHORT_TEXT)
     order = models.IntegerField(default=0)
     example_answer = models.TextField(null=True, blank=True)
+    ai_feedback_enabled = models.BooleanField(default=False)
 
     def last_question(self, user):
         return self.next_question(user) is None

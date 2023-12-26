@@ -317,7 +317,7 @@ class UserAnswerAIEvaluationView(View):
     def get(self, request, *args, **kwargs):
         user_answers = UserAnswer.objects.filter(question__quiz=self.kwargs["quiz_id"], user__id=self.kwargs["user_id"],
                                                  question__type__in=[Question.SHORT_TEXT, Question.LONG_TEXT],
-                                                 ai_feedback__isnull=True)
+                                                 ai_feedback__isnull=True, question__ai_feedback_enabled=True)
         for user_answer in user_answers.all():
             ChatGPTLog.send_request(user_answer)
         return redirect(reverse_lazy("admin_feedback", kwargs={'quiz_id': self.kwargs["quiz_id"],

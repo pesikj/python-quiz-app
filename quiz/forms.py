@@ -17,4 +17,4 @@ class QuizForm(forms.ModelForm):
 class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
-        fields = ["text", "type", "example_answer"]
+        fields = ["text", "type", "example_answer", "ai_feedback_enabled"]
