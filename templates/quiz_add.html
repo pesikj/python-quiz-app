@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h2>Přidat kvíz</h2>
+    <form method="post">
+      {% csrf_token %}
+      {{ form|crispy }}
+      <button type="submit" class="btn btn-primary">Uložit</button>
+      {% if object.pk %}
+        <a href="{% url 'question_add' quiz.id %}" class="btn btn-primary">Přidat otázku</a>
+        <a href="{% url 'admin_quiz_list' quiz.id %}" class="btn btn-primary">Zpětná vazba</a>
+        <a href="{% url 'admin_quiz_review' quiz.id %}" class="btn btn-secondary">Přehled otázek</a>
+      {% endif %}
+    </form>
+  </div>
+{% endblock %}

@@ -2,7 +2,7 @@
 
 {% block content %}
   <div class="container mt-5">
-    <h1>Courses</h1>
+    <h2>Přehled kurzů</h2>
     <ul class="list-group">
       {% for course in courses %}
         <li class="list-group-item">
@@ -10,7 +10,9 @@
           <p>{{ course.description }}</p>
           <a href="{% url 'quiz_list' course.id %}" class="btn btn-primary">Zobrazit</a>
           {% if user.is_superuser %}
+            <a href="{% url 'course_update' course.id %}" class="btn btn-primary">Upravit kurz</a>
             <a href="{% url 'admin_course_feedback_list' course.id %}" class="btn btn-primary">Zpětná vazba</a>
+            <a href="{% url 'course_delete' course.id %}" class="btn btn-danger {% if course.has_answers %}disabled{% endif %}">Delete Course</a>
           {% endif %}
         </li>
       {% empty %}

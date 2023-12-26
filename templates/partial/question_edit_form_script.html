@@ -32,15 +32,17 @@
         }
         return optionsContainer;
     }
-    document.getElementById("type").addEventListener("change", function () {
+    document.getElementById("id_type").addEventListener("change", function () {
         const type = this.value;
         let optionsContainer = document.getElementById('multipleChoiceOptions');
+        const div_example_answer = document.getElementById("div_id_example_answer");
         optionsContainer.innerHTML = "";
         handle_option_add_button_visibility();
 
         if (type === 'MC' || type === 'MM') {
             optionsContainer.innerHTML = "";
             optionsContainer.style.display = "block";
+            div_example_answer.style.display = "none";
             if (type === 'MM') {
                 for (let i = 1; i <= 3; i++) {
                     add_multiple_correct_option(i);
@@ -52,21 +54,25 @@
             }
         } else {
             optionsContainer.style.display = "none";
+            div_example_answer.style.display = null;
         }
     });
 
     const set_question_type_select_value = (question_type) => {
-        const selectElement = document.getElementById("type");
+        const selectElement = document.getElementById("id_type");
         selectElement.value = question_type;
     }
     
     const handle_option_add_button_visibility = () => {
         const add_option_button = document.getElementById("options-add");
-        const type_selection = document.getElementById("type");
+        const type_selection = document.getElementById("id_type");
+        const div_example_answer = document.getElementById("div_id_example_answer");
         if (type_selection.value === 'MC' || type_selection.value === 'MM') {
             add_option_button.style.display = null;
+            div_example_answer.style.display = "none";
         } else {
             add_option_button.style.display = "none";
+            div_example_answer.style.display = null;
         }
     }
 
@@ -89,7 +95,7 @@
     const options_add_button = document.getElementById("options-add");
     options_add_button.onclick = (e) => {
         let optionsContainer = document.getElementById('multipleChoiceOptions');
-        const type_selection = document.getElementById("type");
+        const type_selection = document.getElementById("id_type");
         if (type_selection.value === 'MC') {
             add_single_correct_option(find_maximum_number() + 1);
         } else if (type_selection.value === 'MM') {

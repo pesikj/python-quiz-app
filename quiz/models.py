@@ -1,11 +1,22 @@
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import QuerySet, Q
+from django.db.models import QuerySet, Q, JSONField
+from openai import OpenAI
 
 
 class Course(models.Model):
+    CHATGPT_MODEL_35_TURBO = "gpt-4"
+
+    CHATGPT_MODEL_CHOICES = [
+        (CHATGPT_MODEL_35_TURBO, "gpt-4"),
+    ]
+
     title = models.CharField(max_length=200)
     description = models.TextField()
+    ai_prompt_format = models.TextField(null=True, blank=True)
+    ai_api_key = models.CharField(max_length=200, null=True, blank=True)
+    ai_model = models.CharField(max_length=20, choices=CHATGPT_MODEL_CHOICES, default=CHATGPT_MODEL_35_TURBO,
+                                blank=True)
 
     def get_quiz_question_counts(self, user: User) -> dict:
         quiz_questions_counts = {}
@@ -32,6 +43,13 @@ class Course(models.Model):
             quiz_completion_info[quiz.id] = quiz.quiz_completed(user)
         return quiz_completion_info
 
+    @property
+    def has_answers(self) -> bool:
+        for quiz in self.quiz_set.all():
+            if quiz.has_answers:
+                return True
+        return False
+
     def __str__(self):
         return self.title
 
@@ -40,12 +58,20 @@ class Quiz(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     deadline = models.DateTimeField(null=True, blank=True)
+    ai_prompt_quiz_text = models.CharField(max_length=200, null=True, blank=True)
 
     def quiz_completed(self, user):
         questions_ids = set(self.question_set.values_list("id", flat=True))
         user_answers_questions_id = (
             set(UserAnswer.objects.filter(question__quiz=self, user=user).values_list("question_id", flat=True)))
         return questions_ids == user_answers_questions_id and len(questions_ids) > 0
+
+    @property
+    def has_answers(self) -> bool:
+        for question in self.question_set.all():
+            if question.useranswer_set.exists():
+                return True
+        return False
 
     def __str__(self):
         return self.title
@@ -68,6 +94,7 @@ class Question(models.Model):
     text = models.TextField()
     type = models.CharField(max_length=2, choices=QUESTION_TYPES, default=SHORT_TEXT)
     order = models.IntegerField(default=0)
+    example_answer = models.TextField(null=True, blank=True)
 
     def last_question(self, user):
         return self.next_question(user) is None
@@ -191,4 +218,32 @@ class UserAnswer(models.Model):
 
     class Meta:
         unique_together = ('user', 'question',)
+
+
+class ChatGPTLog(models.Model):
+    message = models.TextField(null=True, blank=True)
+    response = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField("Created At", auto_now_add=True)
+    user_answer = models.ForeignKey(UserAnswer, on_delete=models.CASCADE, null=True, blank=True)
+
+    @classmethod
+    def send_request(cls, user_answer: UserAnswer):
+        client = OpenAI(api_key=user_answer.question.quiz.course.ai_api_key)
+        message_content = user_answer.question.quiz.course.ai_prompt_format
+        message_content = (message_content.replace("[question_text]", user_answer.question.text)
+                           .replace("[answer_text]", user_answer.answer_text))
+        if user_answer.question.example_answer:
+            message_content = message_content.replace("[example_answer]", user_answer.answer_text)
+        stream = client.chat.completions.create(
+            model=user_answer.question.quiz.course.ai_model,
+            messages=[{"role": "user", "content": message_content}],
+            stream=True,
+        )
+        response = "".join([part.choices[0].delta.content or "" for part in stream])
+        print(response)
+        log_item = cls(message=message_content, response=response, user_answer=user_answer)
+        log_item.save()
+        user_answer.ai_feedback = response
+        user_answer.ai_feedback_on = log_item.created_at
+        user_answer.save()
 

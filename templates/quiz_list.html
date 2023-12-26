@@ -3,18 +3,17 @@
 
 {% block content %}
   <div class="container mt-5">
-    <h1>{{ course.title }}</h1>
-    <ul class="list-group">
-      {% for quiz in quizzes %}
-        <li class="list-group-item">
-          <div class="mb-1">
-            <strong>{{ quiz.title }}</strong>
-          </div>
-          <div class="mb-3">
-            {% if quiz.deadline %}
-              <p>Termín pro dokončení: {{ quiz.deadline }}</p>
-            {% endif %}
-          </div>
+    <h2>{{ quizzes.first.course.title }}</h2>
+
+    {% for quiz in quizzes %}
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">{{ quiz.title }}</h5>
+          
+          {% if quiz.deadline %}
+            <p class="card-text">Termín pro dokončení: {{ quiz.deadline }}</p>
+          {% endif %}
+        
           {% if quiz_completion|get_item:quiz.id %}
             <a href="{% url 'quiz_review' quiz.id %}" class="btn btn-primary">Zobrazit výsledky</a>
           {% endif %}
@@ -23,13 +22,15 @@
           {% endif %}
           {% if user.is_superuser %}
             <a href="{% url 'question_add' quiz.id %}" class="btn btn-primary">Přidat otázku</a>
-            <a href="{% url 'admin_quiz_list' quiz.id %}" class="btn btn-primary">Zpětná vazba</a>
+            <a href="{% url 'quiz_update' quiz.id %}" class="btn btn-secondary">Upravit kvíz</a>
+            <a href="{% url 'admin_quiz_list' quiz.id %}" class="btn btn-secondary">Zpětná vazba</a>
             <a href="{% url 'admin_quiz_review' quiz.id %}" class="btn btn-secondary">Přehled otázek</a>
+            <a href="{% url 'quiz_delete' quiz.id %}" class="btn btn-danger {% if quiz.has_answers %}disabled{% endif %}">Delete Quiz</a>
           {% endif %}
-        </li>
-      {% empty %}
-        <li class="list-group-item">No quizes available</li>
-      {% endfor %}
-    </ul>
+        </div>
+      </div>
+    {% empty %}
+      <p>No quizzes available</p>
+    {% endfor %}
   </div>
 {% endblock %}
