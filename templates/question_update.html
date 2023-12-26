@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h2>Úprava otázky {{ object.order }}</h2>
+    <form method="post" id="questionForm">
+      {% csrf_token %}
+      <div class="invalid-feedback">{{ form.errors }}</div>
+
+      {{ form|crispy }}
+    
+      <div id="multipleChoiceOptions"
+           {% if object.type == "ST" or object.type == "LT" %}style="display:none;"{% endif %}>
+
+      </div>
+      <a class="btn btn-secondary text-white" id="options-add" style="display: none;">Přidat možnosti</a>
+      <button type="submit" class="btn btn-primary">Upravit otázku</button>
+    </form>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  {% include "partial/question_edit_form_script.html" %}
+  <script>
+      set_question_type_select_value("{{ object.type }}");
+      {% if object.type == "MC" %}
+          {% for option in object.option_set.all %}
+              add_single_correct_option({{ forloop.counter }}, {% if option.is_correct %}true{% else %}
+                  false{% endif %}, "{{ option.text }}", {{ option.id }});
+          {% endfor %}
+      {% elif object.type == "MM" %}
+          {% for option in object.option_set.all %}
+              add_multiple_correct_option({{ forloop.counter }}, {% if option.is_correct %}true{% else %}
+                  false{% endif %}, "{{ option.text }}", {{ option.id }});
+          {% endfor %}
+      {% endif %}
+  </script>
+{% endblock %}

@@ -33,6 +33,7 @@
       {% endfor %}
 
       <button type="submit" class="btn btn-primary">Uložit</button>
+      <a href="{% url 'ai_feedback' user_answers.first.question.quiz.id user_answers.first.user.id %}" class="btn btn-primary">AI hodnocení</a>
     </form>
   </div>
 {% endblock %}

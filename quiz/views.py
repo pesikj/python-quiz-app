@@ -1,14 +1,15 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.db.models import Max, Q, Count, Case, When, IntegerField
+from django.db.models import Max, Q, Count, Case, When, IntegerField, Sum
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.views.generic import DetailView, CreateView, DeleteView, UpdateView, TemplateView
+from django.views import View
+from django.views.generic import DetailView, CreateView, DeleteView, UpdateView, TemplateView, RedirectView
 from django.views.generic.list import ListView
 
 from .forms import CourseForm, QuizForm, QuestionForm
-from .models import Course, Question, Quiz, Option, UserAnswer
+from .models import Course, Question, Quiz, Option, UserAnswer, ChatGPTLog
 
 
 class CourseListView(ListView):
@@ -39,6 +40,7 @@ class QuestionView(LoginRequiredMixin, DetailView):
     model = Question
     template_name = 'question.html'
     context_object_name = 'question'
+    pk_url_kwarg = 'question_id'
 
     @property
     def _quiz(self):
@@ -82,7 +84,7 @@ class QuestionView(LoginRequiredMixin, DetailView):
 class CourseAddView(UserPassesTestMixin, CreateView):
     model = Course
     form_class = CourseForm
-    template_name = 'add_course.html'
+    template_name = 'course_add.html'
     success_url = reverse_lazy('course_list')
 
     def test_func(self):
@@ -92,17 +94,19 @@ class CourseAddView(UserPassesTestMixin, CreateView):
 class QuizAddView(UserPassesTestMixin, CreateView):
     model = Quiz
     form_class = QuizForm
-    template_name = 'add_quiz.html'
-    success_url = reverse_lazy('course_list')
+    template_name = 'quiz_add.html'
 
     def test_func(self):
         return self.request.user.is_superuser
+
+    def get_success_url(self):
+        return reverse_lazy('quiz_list', kwargs={'course_id': self.object.course.id})
 
 
 class QuestionAddView(UserPassesTestMixin, CreateView):
     model = Question
     form_class = QuestionForm
-    template_name = 'add_question.html'
+    template_name = 'question_add.html'
     success_url = reverse_lazy('course_list')
 
     def test_func(self):
@@ -166,7 +170,7 @@ class QuestionDeleteView(UserPassesTestMixin, DeleteView):
 class QuestionUpdateView(UserPassesTestMixin, UpdateView):
     model = Question
     form_class = QuestionForm
-    template_name = 'update_question.html'
+    template_name = 'question_update.html'
     pk_url_kwarg = 'question_id'
 
     @property
@@ -207,8 +211,8 @@ class QuizFeedbackBaseListView(UserPassesTestMixin, TemplateView):
                                    .filter(question__type__in=[Question.SHORT_TEXT, Question.LONG_TEXT])
                                    .values('user__id', 'user__username', "question__quiz__id", "question__quiz__title")
                                    .annotate(total=Count('question__id', distinct=True),
-                                             feedback_missing=Count(Case(When(admin_feedback__isnull=True, then=1),
-                                                                         output_field=IntegerField()), distinct=True)
+                                             feedback_missing=Sum(Case(When(admin_feedback__isnull=True, then=1),
+                                                                       output_field=IntegerField()))
                                              ))
         return context
 
@@ -251,7 +255,7 @@ class QuizFeedbackView(UserPassesTestMixin, ListView):
         feedback_texts = {key: value for key, value in post_data.items() if 'feedback_' in key}
         for key, value in feedback_texts.items():
             user_answer = UserAnswer.objects.get(pk=int(key.replace("feedback_", "")))
-            if value:
+            if value is not None and len(value.strip()) > 0:
                 user_answer.admin_feedback = value
                 user_answer.admin_feedback_on = timezone.now()
                 user_answer.admin_feedback_by = self.request.user
@@ -262,3 +266,59 @@ class QuizFeedbackView(UserPassesTestMixin, ListView):
                 user_answer.admin_feedback_by = None
                 user_answer.save()
         return redirect(self.get_success_url())
+
+
+class CourseUpdateView(UserPassesTestMixin, UpdateView):
+    model = Course
+    form_class = CourseForm
+    template_name = 'course_add.html'
+    pk_url_kwarg = 'course_id'
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_success_url(self):
+        return reverse_lazy('course_list')
+
+
+class QuizUpdateView(UserPassesTestMixin, UpdateView):
+    model = Quiz
+    form_class = QuizForm
+    template_name = 'quiz_add.html'
+    pk_url_kwarg = 'quiz_id'
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_success_url(self):
+        return reverse_lazy('quiz_list', kwargs={'course_id': self.object.course.id})
+
+
+class QuizDeleteView(UserPassesTestMixin, DeleteView):
+    model = Quiz
+    template_name = 'quiz_confirm_delete.html'
+    pk_url_kwarg = 'quiz_id'
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_success_url(self):
+        return reverse_lazy('quiz_list', kwargs={'course_id': self.object.course.id})
+
+
+class CourseDeleteView(DeleteView):
+    model = Course
+    template_name = 'course_confirm_delete.html'
+    success_url = reverse_lazy('course_list')
+    pk_url_kwarg = "course_id"
+
+
+class UserAnswerAIEvaluationView(View):
+    def get(self, request, *args, **kwargs):
+        user_answers = UserAnswer.objects.filter(question__quiz=self.kwargs["quiz_id"], user__id=self.kwargs["user_id"],
+                                                 question__type__in=[Question.SHORT_TEXT, Question.LONG_TEXT],
+                                                 ai_feedback__isnull=True)
+        for user_answer in user_answers.all():
+            ChatGPTLog.send_request(user_answer)
+        return redirect(reverse_lazy("admin_feedback", kwargs={'quiz_id': self.kwargs["quiz_id"],
+                                                               "user_id": self.kwargs["user_id"]}))

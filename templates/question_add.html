@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <div class="container mt-5">
+    <div class="card">
+      <div class="card-header">
+        Přidat otázku
+      </div>
+      <div class="card-body">
+        <form method="post" id="questionForm">
+          {% csrf_token %}
+          <div class="invalid-feedback">{{ form.errors }}</div>
+          
+          {{ form|crispy }}
+          
+          <div id="multipleChoiceOptions" style="display:none;"></div>
+          <a class="btn btn-secondary text-white" id="options-add" style="display: none;">Přidat možnosti</a>
+          <button type="submit" class="btn btn-primary">Přidat otázku</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  {% include "partial/question_edit_form_script.html" %}
+{% endblock %}

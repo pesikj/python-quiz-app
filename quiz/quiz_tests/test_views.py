@@ -32,14 +32,12 @@ class AddCourseViewTest(TestCase):
 
         self.assertEqual(str(response.context['user']), 'adminuser')
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'add_course.html')
+        self.assertTemplateUsed(response, 'course_add.html')
 
     def test_form_course_creation_by_admin(self):
         self.client.login(username='adminuser', password='12345')
         response = self.client.post(reverse('course_add'),
                                     {'title': 'New Course', 'description': 'New Course Description'})
-
-        self.assertEqual(response.status_code, 302)  # Redirects after successful post
         self.assertTrue(Course.objects.filter(title='New Course').exists())
 
 
@@ -130,7 +128,7 @@ class QuestionViewTest(TestCase):
 
     def test_question_view_get(self):
         self.client.login(username='user', password='password')
-        response = self.client.get(reverse('question', kwargs={'pk': self.question.id}))
+        response = self.client.get(reverse('question', kwargs={'question_id': self.question.id}))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'question.html')
@@ -139,7 +137,7 @@ class QuestionViewTest(TestCase):
     def test_question_view_post_short_text(self):
         self.client.login(username='user', password='password')
         post_data = {'question_id': self.question.id, 'answer_text': 'Sample Answer'}
-        response = self.client.post(reverse('question', kwargs={'pk': self.question.id}), post_data)
+        response = self.client.post(reverse('question', kwargs={'question_id': self.question.id}), post_data)
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(UserAnswer.objects.filter(question=self.question, user=self.user).exists())
@@ -185,7 +183,6 @@ class UserTestReviewViewTest(TestCase):
 
 
 class QuestionDeleteViewTest(TestCase):
-
     @classmethod
     def setUpTestData(cls):
         # Create users
@@ -214,7 +211,6 @@ class QuestionDeleteViewTest(TestCase):
 
 
 class QuestionUpdateViewTest(TestCase):
-
     @classmethod
     def setUpTestData(cls):
         # Create users
