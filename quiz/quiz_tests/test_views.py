@@ -212,7 +212,6 @@ class QuestionDeleteViewTest(TestCase):
         self.assertTrue(Question.objects.filter(id=self.question2.id).exists())
 
 
-
 class QuestionUpdateViewTest(TestCase):
 
     @classmethod
@@ -245,3 +244,96 @@ class QuestionUpdateViewTest(TestCase):
 
         self.assertEqual(response.status_code, 403)  # Assuming regular users are forbidden
         self.assertEqual(Question.objects.get(id=self.question.id).text, 'Sample Question')  # Unchanged
+
+
+class QuizAndCourseFeedbackListViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        # Create a superuser
+        cls.superuser = User.objects.create_superuser(username='admin', password='adminpass')
+
+        # Create test data for course, quiz, question, and user answer
+        cls.course = Course.objects.create(title="Test Course")
+        cls.quiz = Quiz.objects.create(course=cls.course, title="Test Quiz")
+        cls.question = Question.objects.create(quiz=cls.quiz, text="Test Question", type=Question.SHORT_TEXT)
+        cls.user_answer = UserAnswer.objects.create(user=cls.superuser, question=cls.question,
+                                                    answer_text="Test Answer")
+
+        cls.client = Client()
+
+    def test_admin_quiz_list_view_access(self):
+        # Test access control
+        self.client.login(username='admin', password='adminpass')
+        response = self.client.get(reverse('admin_quiz_list', kwargs={'quiz_id': self.quiz.id}))
+        self.assertEqual(response.status_code, 200)
+
+        # Test template used
+        self.assertTemplateUsed(response, "admin_quiz_answers_feedback_list.html")
+
+        # Test context data
+        self.assertIn('user_quizzes', response.context)
+
+    def test_admin_course_feedback_list_view_access(self):
+        # Test access control
+        self.client.login(username='admin', password='adminpass')
+        response = self.client.get(reverse('admin_course_feedback_list', kwargs={'course_id': self.course.id}))
+        self.assertEqual(response.status_code, 200)
+
+        # Test template used
+        self.assertTemplateUsed(response, "admin_course_answers_feedback_list.html")
+
+        # Test context data
+        self.assertIn('user_quizzes', response.context)
+
+
+class QuizFeedbackViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        # Create a superuser and a regular user
+        cls.superuser = User.objects.create_superuser(username='admin', password='adminpass')
+        cls.regular_user = User.objects.create_user(username='user', password='userpass')
+
+        # Create test data for course, quiz, question, and user answer
+        cls.course = Course.objects.create(title="Test Course")
+        cls.quiz = Quiz.objects.create(course=cls.course, title="Test Quiz")
+        cls.question = Question.objects.create(quiz=cls.quiz, text="Test Question", type=Question.SHORT_TEXT)
+        cls.user_answer = UserAnswer.objects.create(user=cls.regular_user, question=cls.question,
+                                                    answer_text="Test Answer")
+
+        cls.client = Client()
+
+    def test_quiz_feedback_view_access_superuser(self):
+        # Test access control for superuser
+        self.client.login(username='admin', password='adminpass')
+        response = self.client.get(
+            reverse('admin_feedback', kwargs={'quiz_id': self.quiz.id, 'user_id': self.regular_user.id}))
+        self.assertEqual(response.status_code, 200)
+
+        # Test template used
+        self.assertTemplateUsed(response, "admin_quiz_answers_feedback.html")
+
+        # Test context data
+        self.assertIn('user_answers', response.context)
+
+    def test_quiz_feedback_view_access_regular_user(self):
+        # Test access control for non-superuser
+        self.client.login(username='user', password='userpass')
+        response = self.client.get(
+            reverse('admin_feedback', kwargs={'quiz_id': self.quiz.id, 'user_id': self.regular_user.id}))
+        self.assertEqual(response.status_code, 403)  # or 302 for redirect to login page
+
+    def test_quiz_feedback_view_post(self):
+        # Test POST request handling
+        self.client.login(username='admin', password='adminpass')
+        post_data = {'feedback_1': 'New feedback'}
+        response = self.client.post(
+            reverse('admin_feedback', kwargs={'quiz_id': self.quiz.id, 'user_id': self.regular_user.id}), post_data)
+
+        # Fetch the updated user_answer
+        updated_user_answer = UserAnswer.objects.get(id=self.user_answer.id)
+        self.assertEqual(updated_user_answer.admin_feedback, 'New feedback')
+        self.assertIsNotNone(updated_user_answer.admin_feedback_on)
+        self.assertEqual(updated_user_answer.admin_feedback_by, self.superuser)
+
+        # Test redirection after post
+        self.assertRedirects(response, reverse('admin_quiz_list', kwargs={'quiz_id': self.quiz.id}))
