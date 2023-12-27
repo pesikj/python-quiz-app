@@ -307,14 +307,20 @@ class QuizDeleteView(UserPassesTestMixin, DeleteView):
         return reverse_lazy('quiz_list', kwargs={'course_id': self.object.course.id})
 
 
-class CourseDeleteView(DeleteView):
+class CourseDeleteView(UserPassesTestMixin, DeleteView):
     model = Course
     template_name = 'course_confirm_delete.html'
     success_url = reverse_lazy('course_list')
     pk_url_kwarg = "course_id"
 
+    def test_func(self):
+        return self.request.user.is_superuser
 
-class UserAnswerAIEvaluationView(View):
+
+class UserAnswerAIEvaluationView(UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.is_superuser
+
     def get(self, request, *args, **kwargs):
         user_answers = UserAnswer.objects.filter(question__quiz=self.kwargs["quiz_id"], user__id=self.kwargs["user_id"],
                                                  question__type__in=[Question.SHORT_TEXT, Question.LONG_TEXT],
