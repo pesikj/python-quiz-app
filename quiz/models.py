@@ -1,3 +1,5 @@
+import os
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import QuerySet, Q, JSONField
@@ -17,6 +19,11 @@ class Course(models.Model):
     ai_api_key = models.CharField(max_length=200, null=True, blank=True)
     ai_model = models.CharField(max_length=20, choices=CHATGPT_MODEL_CHOICES, default=CHATGPT_MODEL_35_TURBO,
                                 blank=True)
+    attachment = models.FileField(upload_to='attachments/', null=True, blank=True)
+
+    @property
+    def filename(self):
+        return os.path.basename(self.attachment.path)
 
     def get_quiz_question_counts(self, user: User) -> dict:
         quiz_questions_counts = {}
@@ -59,6 +66,11 @@ class Quiz(models.Model):
     title = models.CharField(max_length=200)
     deadline = models.DateTimeField(null=True, blank=True)
     ai_prompt_quiz_text = models.CharField(max_length=200, null=True, blank=True)
+    attachment = models.FileField(upload_to='attachments/', null=True, blank=True)
+
+    @property
+    def filename(self):
+        return os.path.basename(self.attachment.path)
 
     def quiz_completed(self, user):
         questions_ids = set(self.question_set.values_list("id", flat=True))
@@ -91,11 +103,23 @@ class Question(models.Model):
     ]
 
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, blank=True)
-    text = models.TextField()
-    type = models.CharField(max_length=2, choices=QUESTION_TYPES, default=SHORT_TEXT)
+    text = models.TextField(verbose_name="Text otázky")
+    type = models.CharField(max_length=2, choices=QUESTION_TYPES, default=SHORT_TEXT, verbose_name="Příklad otázky")
     order = models.IntegerField(default=0)
-    example_answer = models.TextField(null=True, blank=True)
-    ai_feedback_enabled = models.BooleanField(default=False)
+    example_answer = models.TextField(null=True, blank=True, verbose_name="Příklad odpovědi")
+    ai_feedback_enabled = models.BooleanField(default=False, null=True, blank=True)
+    attachment_1 = models.FileField(upload_to='attachments/', null=True, blank=True)
+    attachment_2 = models.FileField(upload_to='attachments/', null=True, blank=True)
+    attachment_3 = models.FileField(upload_to='attachments/', null=True, blank=True)
+
+    @property
+    def question_attachments(self):
+        from quiz.templatetags.custom_filters import is_image
+
+        attachment_list = [x for x in [self.attachment_1, self.attachment_2, self.attachment_3] if x]
+        ordered_attachments = ([x for x in attachment_list if is_image(x.path)] +
+                               [x for x in attachment_list if not is_image(x.path)])
+        return ordered_attachments
 
     def last_question(self, user):
         return self.next_question(user) is None

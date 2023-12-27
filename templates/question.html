@@ -12,6 +12,17 @@
             </div>
             <div class="card-body">
               <p class="card-text">Zadání otázky: <em>{{ question.text }}</em></p>
+              <div class="mb-3">
+                {% for item in question.question_attachments %}
+                  {% if item.path|is_image %}
+                    <a href="{{ item.url }}">
+                      <img src="{{ item.url }}" class="mb-1 thumbnail" alt="{{ item.url }}">
+                    </a>
+                  {% else %}
+                    <li><a href="{{ item.url }}">{{ item.path|filename }}</a></li>
+                  {% endif %}
+                {% endfor %}
+              </div>
               <form method="post" id="question-form">
                 {% csrf_token %}
                 <input type="hidden" value="{{ question.id }}" name="question_id">
