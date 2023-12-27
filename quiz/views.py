@@ -1,3 +1,4 @@
+from django.db.models import Max, Q, Count, Case, When, IntegerField, Sum
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Max, Q, Count, Case, When, IntegerField, Sum
 from django.http import HttpResponseBadRequest
@@ -117,7 +118,7 @@ class QuestionAddView(UserPassesTestMixin, CreateView):
         return Quiz.objects.get(id=self.kwargs['quiz_id'])
 
     def post(self, request, *args, **kwargs):
-        form = QuestionForm(request.POST)
+        form = QuestionForm(request.POST, request.FILES)
         post_data = request.POST.copy()
         if form.is_valid():
             question: Question = form.save(commit=False)
@@ -125,8 +126,8 @@ class QuestionAddView(UserPassesTestMixin, CreateView):
             max_order_value = Question.objects.filter(quiz=self._quiz).aggregate(Max('order'))['order__max']
             question.order = max_order_value + 1 if max_order_value else 1
             question.save()
-            options_texts = {key: value for key, value in post_data.items() if 'option_text' in key}
-            question.save_question_options(options_texts, post_data)
+            question.save_question_options({key: value for key, value in post_data.items() if 'option_text' in key},
+                                           post_data)
             return redirect(reverse_lazy("quiz_list", kwargs={"course_id": self._quiz.course.pk}))
         else:
             return render(request, self.template_name, {'form': form})
@@ -184,14 +185,14 @@ class QuestionUpdateView(UserPassesTestMixin, UpdateView):
         return self.request.user.is_superuser
 
     def post(self, request, *args, **kwargs):
-        form = QuestionForm(request.POST, instance=self.get_object())
+        form = QuestionForm(request.POST, request.FILES, instance=self.get_object())
         post_data = request.POST.copy()
         if form.is_valid():
             question: Question = form.save(commit=False)
             question.quiz = self._quiz
             question.save()
-            options_texts = {key: value for key, value in post_data.items() if 'option_text' in key}
-            question.save_question_options(options_texts, post_data)
+            question.save_question_options({key: value for key, value in post_data.items() if 'option_text' in key},
+                                           post_data)
             return redirect(self.get_success_url())
         else:
             return render(request, self.template_name, {'form': form})

@@ -17,3 +17,12 @@ def get_item(dictionary, key):
 def shuffle_options(queryset: QuerySet[Option]) -> QuerySet[Option]:
     return queryset.order_by("option_order")
 
+
+@register.filter
+def is_image(file_path) -> bool:
+    return file_path.lower().endswith(("png", "jpg", "jpeg", "gif"))
+
+
+@register.filter
+def filename(file_path) -> bool:
+    return file_path.split("/")[-1]

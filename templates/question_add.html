@@ -8,7 +8,7 @@
         Přidat otázku
       </div>
       <div class="card-body">
-        <form method="post" id="questionForm">
+        <form method="post" id="questionForm" enctype="multipart/form-data">
           {% csrf_token %}
           <div class="invalid-feedback">{{ form.errors }}</div>
           

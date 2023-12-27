@@ -7,7 +7,11 @@
       {% for course in courses %}
         <li class="list-group-item">
           <strong>{{ course.title }}</strong>
-          <p>{{ course.description }}</p>
+          <p>{{ course.description }}
+            {% if course.attachment %}
+              <br>Soubor ke stažení: <a href="{{ course.attachment.url }}">{{ course.filename }}</a>
+            {% endif %}
+          </p>
           <a href="{% url 'quiz_list' course.id %}" class="btn btn-primary">Zobrazit</a>
           {% if user.is_superuser %}
             <a href="{% url 'course_update' course.id %}" class="btn btn-primary">Upravit kurz</a>

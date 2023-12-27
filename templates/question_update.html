@@ -4,7 +4,7 @@
 {% block content %}
   <div class="container mt-5">
     <h2>Úprava otázky {{ object.order }}</h2>
-    <form method="post" id="questionForm">
+    <form method="post" id="questionForm" enctype="multipart/form-data">
       {% csrf_token %}
       <div class="invalid-feedback">{{ form.errors }}</div>
 
@@ -15,6 +15,12 @@
 
       </div>
       <a class="btn btn-secondary text-white" id="options-add" style="display: none;">Přidat možnosti</a>
+      <h5>Soubory</h5>
+      <ul>
+        {% for item in question.question_attachments.all %}
+          <li><a href="{{ item.file.url }}">{{ item.filename }}</a></li>
+        {% endfor %}
+      </ul>
       <button type="submit" class="btn btn-primary">Upravit otázku</button>
     </form>
   </div>
