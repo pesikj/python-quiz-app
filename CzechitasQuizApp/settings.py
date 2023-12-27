@@ -131,10 +131,7 @@ MEDIA_URL = "media/"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-    "/var/www/static/",
-]
+STATICFILES_DIRS = (str(BASE_DIR.joinpath('base_static')),)
 MEDIA_ROOT = BASE_DIR / "media/"
 
 LOGIN_REDIRECT_URL = '/'
