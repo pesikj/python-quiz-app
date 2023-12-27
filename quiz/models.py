@@ -19,7 +19,7 @@ class Course(models.Model):
     ai_api_key = models.CharField(max_length=200, null=True, blank=True)
     ai_model = models.CharField(max_length=20, choices=CHATGPT_MODEL_CHOICES, default=CHATGPT_MODEL_35_TURBO,
                                 blank=True)
-    attachment = models.FileField(upload_to='attachments/')
+    attachment = models.FileField(upload_to='attachments/', null=True, blank=True)
 
     @property
     def filename(self):
