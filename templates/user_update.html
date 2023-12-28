@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <div class="container mt-5">
+    <div class="card">
+      <div class="card-header">
+        Upravit nastavení
+      </div>
+      <div class="card-body">
+        <form method="post" id="questionForm" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="invalid-feedback">{{ form.errors }}</div>
+          
+          {{ form|crispy }}
+          
+          <button type="submit" class="btn btn-primary">Uložit</button>
+          <a type="submit" href="{% url 'custom_password_change' %}" class="btn btn-danger">Změnit heslo</a>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

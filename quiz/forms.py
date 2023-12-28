@@ -1,4 +1,9 @@
 from django import forms
+from django.conf import settings
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from django_recaptcha.fields import ReCaptchaField
+
 from .models import Course, Quiz, Question
 
 
@@ -19,3 +24,16 @@ class QuestionForm(forms.ModelForm):
         model = Question
         fields = ["text", "type", "example_answer", "ai_feedback_enabled", "attachment_1", "attachment_2",
                   "attachment_3"]
+
+
+class UserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "email"]
+
+
+class CustomUserCreationForm(UserCreationForm):
+    def __init__(self, *args, **kwargs):
+        super(CustomUserCreationForm, self).__init__(*args, **kwargs)
+        if hasattr(settings, "RECAPTCHA_PRIVATE_KEY") and settings.RECAPTCHA_PRIVATE_KEY:
+            self.fields["captcha"] = ReCaptchaField()
