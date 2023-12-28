@@ -4,3 +4,4 @@
 .idea
 /media/
 /django_errors.log
+/staticfiles/
