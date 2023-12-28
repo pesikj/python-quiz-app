@@ -46,3 +46,7 @@ DATABASES = {
         'PASSWORD': conn_str_params['password'],
     }
 }
+
+RECAPTCHA_PUBLIC_KEY = os.getenv("RECAPTCHA_PUBLIC_KEY", "")
+RECAPTCHA_PRIVATE_KEY = os.getenv("RECAPTCHA_PRIVATE_KEY", "")
+SILENCED_SYSTEM_CHECKS = []

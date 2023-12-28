@@ -1,16 +1,17 @@
-from django.db.models import Max, Q, Count, Case, When, IntegerField, Sum
+from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.db.models import Max, Q, Count, Case, When, IntegerField, Sum
-from django.http import HttpResponseBadRequest
+from django.contrib.auth.models import User
+from django.contrib.auth.views import PasswordChangeView
+from django.db.models import Max, Count, Case, When, IntegerField, Sum
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import View
-from django.views.generic import DetailView, CreateView, DeleteView, UpdateView, TemplateView, RedirectView
+from django.views.generic import DetailView, CreateView, DeleteView, UpdateView, TemplateView
 from django.views.generic.list import ListView
 
-from .forms import CourseForm, QuizForm, QuestionForm
-from .models import Course, Question, Quiz, Option, UserAnswer, ChatGPTLog
+from .forms import CourseForm, QuizForm, QuestionForm, UserForm, CustomUserCreationForm
+from .models import Course, Question, Quiz, UserAnswer, ChatGPTLog
 
 
 class CourseListView(ListView):
@@ -223,8 +224,8 @@ class QuizFeedbackListView(QuizFeedbackBaseListView):
 
     def _get_user_answers_query(self):
         return UserAnswer.objects.filter(question__quiz=self.kwargs["quiz_id"])
-    
-    
+
+
 class CourseFeedbackListView(QuizFeedbackBaseListView):
     template_name = "admin_course_answers_feedback_list.html"
 
@@ -329,3 +330,29 @@ class UserAnswerAIEvaluationView(UserPassesTestMixin, View):
             ChatGPTLog.send_request(user_answer)
         return redirect(reverse_lazy("admin_feedback", kwargs={'quiz_id': self.kwargs["quiz_id"],
                                                                "user_id": self.kwargs["user_id"]}))
+
+
+class UserUpdateView(LoginRequiredMixin, UpdateView):
+    model = User
+    form_class = UserForm
+    template_name = 'user_update.html'
+    success_url = reverse_lazy('user_update')
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+
+class CustomPasswordChangeView(PasswordChangeView):
+    template_name = 'user_password_change.html'
+    success_url = reverse_lazy('custom_password_change_done')
+
+
+class CustomPasswordChangeDoneView(TemplateView):
+    template_name = 'user_password_change_done.html'
+
+
+class RegisterView(CreateView):
+    model = User
+    form_class = CustomUserCreationForm
+    template_name = 'registration/register.html'
+    success_url = reverse_lazy('login')

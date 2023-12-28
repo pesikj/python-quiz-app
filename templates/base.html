@@ -17,9 +17,6 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ml-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'course_list' %}">Přehled kurzů</a>
-        </li>       
         {% if user.is_superuser %}
           <li class="nav-item">
             <a class="nav-link" href="{% url "course_add" %}">Přidat kurz</a>
@@ -29,12 +26,21 @@
           </li>
         {% endif %}
         {% if user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'course_list' %}">Přehled kurzů</a>
+        </li> 
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'logout' %}">Sign Out</a>
+            <a class="nav-link" href="{% url 'user_update' %}">Upravit nastavení</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'logout' %}">Odhlásit</a>
           </li>
         {% else %}
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'login' %}">Sign In</a>
+            <a class="nav-link" href="{% url 'login' %}">Přihlásit</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'register' %}">Registrovat</a>
           </li>
         {% endif %}
       </ul>

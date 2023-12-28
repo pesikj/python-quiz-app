@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'crispy_forms',
     "crispy_bootstrap4",
+    'django_recaptcha',
     # Custom apps
     "quiz",
 ]
@@ -168,3 +169,4 @@ LOGGING = {
     },
 }
 
+SILENCED_SYSTEM_CHECKS = ['django_recaptcha.recaptcha_test_key_error']

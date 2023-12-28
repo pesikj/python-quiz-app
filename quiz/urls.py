@@ -2,7 +2,7 @@ from django.urls import path
 from .views import CourseListView, QuizListView, QuestionView, CourseAddView, QuizAddView, QuestionAddView, \
     UserTestReviewView, AdminQuizReviewView, QuestionDeleteView, QuestionUpdateView, QuizFeedbackListView, \
     QuizFeedbackView, CourseFeedbackListView, CourseUpdateView, QuizUpdateView, QuizDeleteView, CourseDeleteView, \
-    UserAnswerAIEvaluationView
+    UserAnswerAIEvaluationView, UserUpdateView, CustomPasswordChangeView, CustomPasswordChangeDoneView, RegisterView
 
 urlpatterns = [
     path("", CourseListView.as_view(), name="course_list"),
@@ -25,4 +25,8 @@ urlpatterns = [
     path('course/delete/<int:course_id>/', CourseDeleteView.as_view(), name='course_delete'),
     path("quiz/<int:quiz_id>/<int:user_id>/ai-feedback/", UserAnswerAIEvaluationView.as_view(),
          name="ai_feedback"),
+    path('user/update/', UserUpdateView.as_view(), name='user_update'),
+    path('user/password_change/', CustomPasswordChangeView.as_view(), name='custom_password_change'),
+    path('user/password_change/done/', CustomPasswordChangeDoneView.as_view(), name='custom_password_change_done'),
+    path('register/', RegisterView.as_view(), name='register'),
 ]
