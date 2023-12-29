@@ -2,34 +2,114 @@
     const add_multiple_correct_option = (i, correct = false, value = "", option_id = null) => {
         const optionsContainer = document.getElementById('multipleChoiceOptions');
         const checked = correct ? "checked" : "";
-        optionsContainer.innerHTML += `
-            <div class="form-group">
-                <label for="option_text${i}">Možnost ${i}</label>
-                <input type="text" class="form-control mb-1" id="option_text_${i}" name="option_text_${i}" value="${value}">
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" id="is_correct_${i}" name="is_correct_${i}" ${checked}>
-                    <label class="form-check-label" for="is_correct_${i}">Správná odpověď</label>
-                </div>
-                <textarea class="form-control" id="feedback_${i}" name="feedback_${i}" rows="3" placeholder="Zpětná vazba pro možnost ${i}"></textarea>
-            </div>`;
-        if (option_id) {
-            optionsContainer.innerHTML += `<input type="hidden" name="option_id_${i}" value="${option_id}">`
+    
+        // Create the container for the new option
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'form-group';
+    
+        // Add input field for option text
+        const label = document.createElement('label');
+        label.setAttribute('for', `option_text${i}`);
+        label.textContent = `Možnost ${i}`;
+        optionDiv.appendChild(label);
+    
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'form-control mb-1';
+        input.id = `option_text_${i}`;
+        input.name = `option_text_${i}`;
+        input.value = value;
+        optionDiv.appendChild(input);
+    
+        // Add checkbox
+        const divCheckbox = document.createElement('div');
+        divCheckbox.className = 'form-check mb-2';
+    
+        const checkbox = document.createElement('input');
+        checkbox.className = 'form-check-input';
+        checkbox.type = 'checkbox';
+        checkbox.id = `is_correct_${i}`;
+        checkbox.name = `is_correct_${i}`;
+        if(correct) {
+            checkbox.checked = true;
         }
+        divCheckbox.appendChild(checkbox);
+    
+        const labelCheckbox = document.createElement('label');
+        labelCheckbox.className = 'form-check-label';
+        labelCheckbox.setAttribute('for', `is_correct_${i}`);
+        labelCheckbox.textContent = 'Správná odpověď';
+        divCheckbox.appendChild(labelCheckbox);
+    
+        optionDiv.appendChild(divCheckbox);
+    
+        // Add textarea for feedback
+        const textarea = document.createElement('textarea');
+        textarea.className = 'form-control';
+        textarea.id = `feedback_${i}`;
+        textarea.name = `feedback_${i}`;
+        textarea.rows = 3;
+        textarea.placeholder = `Zpětná vazba pro možnost ${i}`;
+        optionDiv.appendChild(textarea);
+    
+        // Append the optionDiv to the optionsContainer
+        optionsContainer.appendChild(optionDiv);
+    
+        // Add hidden input for option ID if applicable
+        if (option_id) {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = `option_id_${i}`;
+            hiddenInput.value = option_id;
+            optionsContainer.appendChild(hiddenInput);
+        }
+    
         return optionsContainer;
-
     }
     const add_single_correct_option = (i, correct = false, value = "", option_id = null) => {
         const optionsContainer = document.getElementById('multipleChoiceOptions');
         const title = correct ? "Správná možnost" : "Nesprávná možnost";
-        optionsContainer.innerHTML += `
-            <div class="form-group">
-                <label for="option_text${i}">${title}</label>
-                <input type="text" class="form-control mb-2" id="option_text_${i}" name="option_text_${i}" value="${value}">
-                <textarea class="form-control" id="feedback_${i}" name="feedback_${i}" rows="3" placeholder="Zpětná vazba pro možnost ${i}"></textarea>
-            </div>`;
+    
+        // Create the container for the new option
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'form-group';
+    
+        // Add label
+        const label = document.createElement('label');
+        label.setAttribute('for', `option_text${i}`);
+        label.textContent = title;
+        optionDiv.appendChild(label);
+    
+        // Add input field for option text
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'form-control mb-2';
+        input.id = `option_text_${i}`;
+        input.name = `option_text_${i}`;
+        input.value = value;
+        optionDiv.appendChild(input);
+    
+        // Add textarea for feedback
+        const textarea = document.createElement('textarea');
+        textarea.className = 'form-control';
+        textarea.id = `feedback_${i}`;
+        textarea.name = `feedback_${i}`;
+        textarea.rows = 3;
+        textarea.placeholder = `Zpětná vazba pro možnost ${i}`;
+        optionDiv.appendChild(textarea);
+    
+        // Append the optionDiv to the optionsContainer
+        optionsContainer.appendChild(optionDiv);
+    
+        // Add hidden input for option ID if applicable
         if (option_id) {
-            optionsContainer.innerHTML += `<input type="hidden" name="option_id_${i}" value="${option_id}">`
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = `option_id_${i}`;
+            hiddenInput.value = option_id;
+            optionsContainer.appendChild(hiddenInput);
         }
+    
         return optionsContainer;
     }
     document.getElementById("id_type").addEventListener("change", function () {
