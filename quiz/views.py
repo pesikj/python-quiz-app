@@ -1,7 +1,8 @@
+from django.contrib.auth import logout
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
-from django.contrib.auth.views import PasswordChangeView
+from django.contrib.auth.views import PasswordChangeView, LogoutView
 from django.db.models import Max, Count, Case, When, IntegerField, Sum
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
@@ -356,3 +357,9 @@ class RegisterView(CreateView):
     form_class = CustomUserCreationForm
     template_name = 'registration/register.html'
     success_url = reverse_lazy('login')
+
+
+class CustomLogoutView(View):
+    def get(self, request, *args, **kwargs):
+        logout(request)
+        return redirect(reverse_lazy('course_list'))
