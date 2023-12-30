@@ -1,5 +1,5 @@
 <script>
-    const add_multiple_correct_option = (i, correct = false, value = "", option_id = null) => {
+    const add_multiple_correct_option = (i, correct = false, value = "", option_id = null, feedback = "") => {
         const optionsContainer = document.getElementById('multipleChoiceOptions');
         const checked = correct ? "checked" : "";
     
@@ -50,6 +50,7 @@
         textarea.name = `feedback_${i}`;
         textarea.rows = 3;
         textarea.placeholder = `Zpětná vazba pro možnost ${i}`;
+        textarea.innerText = feedback;
         optionDiv.appendChild(textarea);
     
         // Append the optionDiv to the optionsContainer
@@ -66,7 +67,7 @@
     
         return optionsContainer;
     }
-    const add_single_correct_option = (i, correct = false, value = "", option_id = null) => {
+    const add_single_correct_option = (i, correct = false, value = "", option_id = null, feedback = "") => {
         const optionsContainer = document.getElementById('multipleChoiceOptions');
         const title = correct ? "Správná možnost" : "Nesprávná možnost";
     
@@ -96,6 +97,7 @@
         textarea.name = `feedback_${i}`;
         textarea.rows = 3;
         textarea.placeholder = `Zpětná vazba pro možnost ${i}`;
+        textarea.innerText = feedback;
         optionDiv.appendChild(textarea);
     
         // Append the optionDiv to the optionsContainer

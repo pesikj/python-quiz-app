@@ -112,6 +112,9 @@ class Question(models.Model):
     attachment_2 = models.FileField(upload_to='attachments/', null=True, blank=True)
     attachment_3 = models.FileField(upload_to='attachments/', null=True, blank=True)
 
+    class Meta:
+        ordering = ["quiz__id", "order"]
+
     @property
     def question_attachments(self):
         from quiz.templatetags.custom_filters import is_image
@@ -162,6 +165,7 @@ class Question(models.Model):
         is_correct = True
         selected_options = None
         missing = 0
+        selected_options_queryset = []
         if self.type == self.MULTIPLE_CHOICE_SINGLE_ANSWER:
             user_answer = int(post_data.get("selected_option"))
             selected_options_queryset = self.option_set.filter(pk=user_answer)
