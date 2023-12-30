@@ -137,7 +137,7 @@ class QuestionAddView(UserPassesTestMixin, CreateView):
             question.save()
             question.save_question_options({key: value for key, value in post_data.items() if 'option_text' in key},
                                            post_data)
-            return redirect(reverse_lazy("quiz_list", kwargs={"course_id": self._quiz.course.pk}))
+            return redirect(self.get_success_url())
         else:
             return render(request, self.template_name, {'form': form})
 
