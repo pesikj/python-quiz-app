@@ -3,7 +3,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.contrib.auth.views import PasswordChangeView, LogoutView
-from django.db.models import Max, Count, Case, When, IntegerField, Sum
+from django.db.models import Max, Count, Case, When, IntegerField, Sum, Value
+from django.db.models.functions import Coalesce
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -221,8 +222,11 @@ class QuizFeedbackBaseListView(UserPassesTestMixin, TemplateView):
                                    .filter(question__type__in=[Question.SHORT_TEXT, Question.LONG_TEXT])
                                    .values('user__id', 'user__username', "question__quiz__id", "question__quiz__title")
                                    .annotate(total=Count('question__id', distinct=True),
-                                             feedback_missing=Sum(Case(When(admin_feedback__isnull=True, then=1),
-                                                                       output_field=IntegerField()))
+                                             feedback_missing=Coalesce(
+                                                 Sum(Case(
+                                                     When(admin_feedback__isnull=True, then=Value(1)),
+                                                     output_field=IntegerField())),
+                                                 Value(0))
                                              ))
         return context
 
