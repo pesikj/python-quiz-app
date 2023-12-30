@@ -33,12 +33,12 @@
       {% if object.type == "MC" %}
           {% for option in object.option_set.all %}
               add_single_correct_option({{ forloop.counter }}, {% if option.is_correct %}true{% else %}
-                  false{% endif %}, "{{ option.text }}", {{ option.id }});
+                  false{% endif %}, "{{ option.text }}", {{ option.id }}, "{{ option.feedback }}");
           {% endfor %}
       {% elif object.type == "MM" %}
           {% for option in object.option_set.all %}
               add_multiple_correct_option({{ forloop.counter }}, {% if option.is_correct %}true{% else %}
-                  false{% endif %}, "{{ option.text }}", {{ option.id }});
+                  false{% endif %}, "{{ option.text }}", {{ option.id }}, "{{ option.feedback }}");
           {% endfor %}
       {% endif %}
   </script>
