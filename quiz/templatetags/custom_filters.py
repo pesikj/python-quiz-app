@@ -32,5 +32,5 @@ def filename(file_path) -> bool:
 
 @register.filter
 def convert_markdown_to_html(markdown_text: str) -> str:
-    md = markdown.Markdown(extensions=["fenced_code"])
+    md = markdown.Markdown(extensions=["fenced_code", "tables"])
     return md.convert(markdown_text)
