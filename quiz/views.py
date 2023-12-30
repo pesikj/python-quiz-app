@@ -110,7 +110,9 @@ class QuestionAddView(UserPassesTestMixin, CreateView):
     model = Question
     form_class = QuestionForm
     template_name = 'question_add.html'
-    success_url = reverse_lazy('course_list')
+
+    def get_success_url(self):
+        return reverse_lazy('admin_quiz_review', kwargs={'quiz_id': self._quiz.id})
 
     def test_func(self):
         return self.request.user.is_superuser
@@ -118,6 +120,11 @@ class QuestionAddView(UserPassesTestMixin, CreateView):
     @property
     def _quiz(self):
         return Quiz.objects.get(id=self.kwargs['quiz_id'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['quiz'] = self._quiz
+        return context
 
     def post(self, request, *args, **kwargs):
         form = QuestionForm(request.POST, request.FILES)
