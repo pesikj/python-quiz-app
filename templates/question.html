@@ -11,7 +11,7 @@
               Otázka č. {{ question.order }}
             </div>
             <div class="card-body">
-              <p class="card-text">Zadání otázky: <em>{{ question.text }}</em></p>
+              <p class="card-text">Zadání otázky: <em>{{ question.text|convert_markdown_to_html|safe }}</em></p>
               <div class="mb-3">
                 {% for item in question.question_attachments %}
                   {% if item.path|is_image %}

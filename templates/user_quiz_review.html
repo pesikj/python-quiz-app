@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block content %}
   <div class="container mt-5">
@@ -9,7 +10,7 @@
           Otázka {{ answer.question.order }}
         </div>
         <div class="card-body">
-          <p class="card-text">{{ answer.question.text }}</p>
+          <p class="card-text">{{ answer.question.text|convert_markdown_to_html|safe }}</p>
           <h6 class="card-title">Tvoje dpověď</h6>
           <p class="card-text">
             {% autoescape off %}

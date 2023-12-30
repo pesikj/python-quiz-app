@@ -1,5 +1,7 @@
 import random
 
+import markdown
+
 from django import template
 from django.db.models import QuerySet
 
@@ -26,3 +28,9 @@ def is_image(file_path) -> bool:
 @register.filter
 def filename(file_path) -> bool:
     return file_path.split("/")[-1]
+
+
+@register.filter
+def convert_markdown_to_html(markdown_text: str) -> str:
+    md = markdown.Markdown(extensions=["fenced_code"])
+    return md.convert(markdown_text)
