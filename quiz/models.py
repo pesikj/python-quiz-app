@@ -113,7 +113,7 @@ class Question(models.Model):
     attachment_3 = models.FileField(upload_to='attachments/', null=True, blank=True)
 
     class Meta:
-        ordering = ["quiz__id", "order"]
+        ordering = ["order"]
 
     @property
     def question_attachments(self):
