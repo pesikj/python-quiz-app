@@ -23,7 +23,11 @@
             <div class="form-group">
               <label for="feedback_{{ answer.id }}">Zpětná vazba kouče/koučky</label>
               <textarea id="feedback_{{ answer.id }}" name="feedback_{{ answer.id }}" class="form-control">{{ answer.admin_feedback | default:"" }}</textarea>
+              <label for="username">Body</label>
+              <input type="text" class="form-control" id="points_{{ answer.id }}" name="points_{{ answer.id }}" placeholder="" value="{{ answer.points }}">
             </div>
+            <button type="submit" class="btn btn-primary">Uložit</button>
+            <a href="{% url 'ai_feedback' user_answers.first.question.quiz.id user_answers.first.user.id %}" class="btn btn-primary">AI hodnocení</a>
           </div>
           {% if answer.admin_feedback_on %}
             <div class="card-footer">
@@ -32,9 +36,6 @@
           {% endif %}
         </div>
       {% endfor %}
-
-      <button type="submit" class="btn btn-primary">Uložit</button>
-      <a href="{% url 'ai_feedback' user_answers.first.question.quiz.id user_answers.first.user.id %}" class="btn btn-primary">AI hodnocení</a>
     </form>
   </div>
 {% endblock %}

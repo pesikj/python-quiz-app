@@ -27,14 +27,14 @@
                 {% csrf_token %}
                 <input type="hidden" value="{{ question.id }}" name="question_id">
                 {% if question.type == "ST" %}
-                  <input type="text" class="form-control" name="answer_text" placeholder="Zadej odpověď">
+                  <input type="text" class="form-control" name="answer_text" placeholder="Zadej odpověď" {% if not allow_answer %}readonly{% endif %}>
                 {% elif question.type == "LT" %}
-                  <textarea class="form-control" name="answer_text" placeholder="Zadej odpověď" rows="4"></textarea>
+                  <textarea class="form-control" name="answer_text" placeholder="Zadej odpověď" rows="4" {% if not allow_answer %}readonly{% endif %}></textarea>
                 {% elif question.type == "MC" %}
                   {% for option in question.option_set.all|shuffle_options %}
                     <div class="form-check">
                       <input class="form-check-input" type="radio" name="selected_option" id="option_{{ option.id }}"
-                             value="{{ option.id }}" required>
+                             value="{{ option.id }}" required {% if not allow_answer %}disabled{% endif %}>
                       <label class="form-check-label" for="option_{{ option.id }}">
                         {{ option.text }}
                       </label>
@@ -44,7 +44,8 @@
                   {% for option in question.option_set.all|shuffle_options %}
                     <div class="form-check">
                       <input class="form-check-input" type="checkbox" name="option_{{ option.id }}"
-                             id="option_{{ option.id }}" value="{{ option.id }}"
+                             id="option_{{ option.id }}" value="{{ option.id }}" 
+                             {% if not allow_answer %}disabled{% endif %}
                              {% if option.id in selected_options_ids %}checked{% endif %}>
                       <label class="form-check-label" for="option_{{ option.id }}">
                         {{ option.text }}
@@ -59,7 +60,7 @@
                     <a href="{% url 'quiz_list' question.quiz.course.pk %}" class="btn btn-primary mt-3">Dokončit</a>
                   {% endif %}
                 {% else %}
-                  <button type="submit" class="btn btn-primary mt-3">Odeslat</button>
+                  <button type="submit" class="btn btn-primary mt-3" {% if not allow_answer %}disabled{% endif %}>Odeslat</button>
                   {% if previous_question %}
                     <a href="{% url 'question' previous_question.pk %}" class="btn btn-secondary mt-3">Předchozí</a>
                   {% endif %}
@@ -74,11 +75,14 @@
                   <div class="alert alert-{{ feedback_type | default:'info' }}" role="alert">
                     <h4 class="alert-heading">Zpětná vazba</h4>
                     {% for item in feedback %}
-                      {% if item.0 %}<p class="feedback-text">{{ item.0 }}: {% endif %}{{ item.1 }}</p>
+                      {% if item.0 %}<p class="feedback-text"><b>{{ item.0 }}</b>: {% endif %}{{ item.1 }}</p>
                     {% endfor %}
                     {% if missing > 0 %}
                       <p class="feedback-text">Je třeba označit alespoň jednu další možnost.</p>
                     {% endif %}
+                    <p>
+                      Zbývající počet pokusů u této otázky: <b>{{ attempts_remaining }}.</b>
+                    </p>
                   </div>
                 {% endif %}
                 <div class="alert alert-danger" role="alert" style="display: none" id="alert-select-one-option">

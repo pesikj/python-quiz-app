@@ -17,12 +17,16 @@
               {{ answer.user_answer }}
             {% endautoescape %}
           </p>
+          <h6 class="card-title">Zpětná vazba {% if answer.points is not None %}(získáno bodů: {{ answer.points_formatted }}/1){% endif %}</h6>
           {% if answer.answer_feedback %}
-            <h6 class="card-title">Zpětná vazba</h6>
             <p class="card-text">
               {% autoescape off %}
                 {{ answer.answer_feedback }}
               {% endautoescape %}
+            </p>
+          {% else %}
+            <p class="card-text">
+              Zpětná vazba zatím nebyla doplněna.
             </p>
           {% endif %}
         </div>

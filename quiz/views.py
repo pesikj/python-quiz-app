@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.contrib.auth.views import PasswordChangeView, LogoutView
+from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Max, Count, Case, When, IntegerField, Sum, Value
 from django.db.models.functions import Coalesce
 from django.shortcuts import render, redirect
@@ -46,42 +47,67 @@ class QuestionView(LoginRequiredMixin, DetailView):
     context_object_name = 'question'
     pk_url_kwarg = 'question_id'
 
+    def __update_context_question(self, context: dict) -> dict:
+        question = self.get_object()
+        attempts_remaining = question.max_attempts
+        context.update({"quiz": self._quiz, "question": question, "next_question":
+                        question.next_question(self.request.user),
+                        "previous_question": question.previous_question(self.request.user),
+                        "attempts_remaining": attempts_remaining, "allow_answer": True, "continue": False})
+
+    def __update_context_user_answer(self, context: dict, user_answer: UserAnswer):
+        question = self.get_object()
+        if question.type in (Question.SHORT_TEXT, Question.LONG_TEXT):
+            context.update({"feedback": [["", "Odpověď byla uložena"]], "continue": True, "allow_answer": False,
+                            "continue": True})
+        elif question.type in (Question.MULTIPLE_CHOICE_SINGLE_ANSWER, Question.MULTIPLE_CHOICE_MULTIPLE_ANSWER):
+            attempts_remaining = ((question.max_attempts -
+                                  UserAnswer.get_attempt_number_for_user_question(self.request.user.pk, question.pk))
+                                  + 1)
+            context.update({"missing": user_answer.missing_answers, "attempts_remaining": attempts_remaining,
+                            "allow_answer": attempts_remaining > 0, "continue": attempts_remaining == 0})
+            if user_answer.points == 1:
+                context["feedback_type"] = "success"
+                context["continue"] = True
+            else:
+                context["feedback_type"] = "warning"
+            if question.type == Question.MULTIPLE_CHOICE_SINGLE_ANSWER:
+                selected_options = user_answer.selected_options.all()
+                context["feedback"] = [[selected_options.first().text, selected_options.first().calculated_feedback]]
+                context["selected_option"] = selected_options.first()
+            elif question.type == Question.MULTIPLE_CHOICE_MULTIPLE_ANSWER:
+                selected_options = user_answer.selected_options.all()
+                context["feedback"] = [[x.text, x.calculated_feedback] for x in selected_options]
+                context["selected_options_ids"] = [selected_option.id for selected_option in selected_options]
+
     @property
     def _quiz(self):
         return self.get_object().quiz
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["quiz"] = self._quiz
-        context["next_question"] = self.object.next_question(self.request.user)
-        context["previous_question"] = self.object.previous_question(self.request.user)
+        self.__update_context_question(context)
+        user_answers = UserAnswer.get_user_answers_single_question(self.request.user.pk, self._quiz.pk,
+                                                                   self.get_object().pk)
+        if user_answers.exists():
+            user_answer = user_answers.order_by("attempt_number").last()
+            self.__update_context_user_answer(context, user_answer)
         return context
 
     def post(self, request, *args, **kwargs):
         post_data = request.POST.copy()
         question_id = post_data['question_id']
         question = Question.objects.get(pk=int(question_id))
-        context = {"quiz": self._quiz, "question": question, "next_question": question.next_question(self.request.user),
-                   "previous_question": question.previous_question(self.request.user)}
+        context = {}
+        self.__update_context_question(context)
         if question.type in (Question.SHORT_TEXT, Question.LONG_TEXT):
             user_answer = UserAnswer.objects.create(question=question, answer_text=post_data["answer_text"],
                                                     user=self.request.user)
             user_answer.save()
-            context.update({"feedback": [["", "Odpověď byla uložena"]], "continue": True})
+            self.__update_context_user_answer(context, user_answer)
         elif question.type in (Question.MULTIPLE_CHOICE_SINGLE_ANSWER, Question.MULTIPLE_CHOICE_MULTIPLE_ANSWER):
-            selected_options, is_correct, missing = question.evaluate_response(post_data, request.user)
-            context.update({"missing": missing})
-            if is_correct:
-                context["feedback_type"] = "success"
-                context["continue"] = True
-            else:
-                context["feedback_type"] = "warning"
-            if question.type == Question.MULTIPLE_CHOICE_SINGLE_ANSWER:
-                context["feedback"] = [[selected_options.first().text, selected_options.first().calculated_feedback]]
-                context["selected_option"] = selected_options.first()
-            else:
-                context["feedback"] = [[x.text, x.calculated_feedback] for x in selected_options]
-                context["selected_options_ids"] = [selected_option.id for selected_option in selected_options]
+            user_answer: UserAnswer = question.evaluate_response(post_data, request.user)
+            self.__update_context_user_answer(context, user_answer)
         return render(request, self.template_name, context)
 
 
@@ -154,7 +180,8 @@ class UserTestReviewView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         quiz = self._quiz
-        return UserAnswer.objects.filter(question__quiz=quiz).filter(user=self.request.user).order_by("question__order")
+        return [x for x in UserAnswer.objects.filter(question__quiz=quiz)
+                .filter(user=self.request.user).order_by("question__order") if x.is_last_attempt]
 
 
 class AdminQuizReviewView(UserPassesTestMixin, ListView):
@@ -273,11 +300,13 @@ class QuizFeedbackView(UserPassesTestMixin, ListView):
                 user_answer.admin_feedback = value
                 user_answer.admin_feedback_on = timezone.now()
                 user_answer.admin_feedback_by = self.request.user
+                user_answer.points = float(post_data.get(f"points_{user_answer.pk}", "0").replace(",", "."))
                 user_answer.save()
             else:
                 user_answer.admin_feedback = None
                 user_answer.admin_feedback_on = None
                 user_answer.admin_feedback_by = None
+                user_answer.points = None
                 user_answer.save()
         return redirect(self.get_success_url())
 
@@ -335,9 +364,9 @@ class UserAnswerAIEvaluationView(UserPassesTestMixin, View):
         return self.request.user.is_superuser
 
     def get(self, request, *args, **kwargs):
-        user_answers = UserAnswer.objects.filter(question__quiz=self.kwargs["quiz_id"], user__id=self.kwargs["user_id"],
-                                                 question__type__in=[Question.SHORT_TEXT, Question.LONG_TEXT],
-                                                 ai_feedback__isnull=True, question__ai_feedback_enabled=True)
+        user_answers = UserAnswer.get_user_answers_single_question(self.kwargs["user_id"], self.kwargs["quiz_id"],
+                                                                   question_type_list=[Question.SHORT_TEXT, Question.LONG_TEXT],
+                                                                   ai_feedback_enabled=True)
         for user_answer in user_answers.all():
             ChatGPTLog.send_request(user_answer)
         return redirect(reverse_lazy("admin_feedback", kwargs={'quiz_id': self.kwargs["quiz_id"],
@@ -363,11 +392,12 @@ class CustomPasswordChangeDoneView(TemplateView):
     template_name = 'user_password_change_done.html'
 
 
-class RegisterView(CreateView):
+class RegisterView(SuccessMessageMixin, CreateView):
     model = User
     form_class = CustomUserCreationForm
     template_name = 'registration/register.html'
     success_url = reverse_lazy('login')
+    success_message = "Účet byl vytvořen, můžeš se přhlásit."
 
 
 class CustomLogoutView(View):
