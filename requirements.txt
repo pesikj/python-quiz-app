@@ -1,6 +1,6 @@
 annotated-types==0.7.0
 anyio==4.8.0
-asgiref==3.7.2
+asgiref==3.8.1
 certifi==2023.11.17
 crispy-bootstrap4==2023.1
 distro==1.9.0
