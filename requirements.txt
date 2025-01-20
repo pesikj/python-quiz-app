@@ -4,7 +4,7 @@ asgiref==3.8.1
 certifi==2023.11.17
 crispy-bootstrap4==2024.10
 distro==1.9.0
-Django==5.1.4
+Django==5.1.5
 django-crispy-forms==2.1
 django-recaptcha==4.0.0
 django-redis==5.4.0
