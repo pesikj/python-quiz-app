@@ -16,7 +16,7 @@ idna==3.10
 Markdown==3.7
 openai==1.59.8
 packaging==24.2
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.10
 pydantic==2.10.5
 pydantic_core==2.14.6
 redis==5.2.1
